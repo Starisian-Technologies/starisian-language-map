@@ -189,9 +189,10 @@
 		// ── Scene setup ──────────────────────────────────────────────────────
 		var W = container.clientWidth  || 800;
 		var H = container.clientHeight || 600;
+		var pixelRatio = Math.min( window.devicePixelRatio || 1, 2 );
 
 		var renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
-		renderer.setPixelRatio( window.devicePixelRatio );
+		renderer.setPixelRatio( pixelRatio );
 		renderer.setSize( W, H );
 		renderer.setClearColor( 0x000000, 1 );
 		container.appendChild( renderer.domElement );
