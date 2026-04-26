@@ -82,9 +82,8 @@ jobs:
             wp-content/plugins/sparxstar-data-gap/ \
             "$PLUGIN_DIR/"
 
-          # Remove source (unminified) JS/CSS — only ship the .min. files.
-          rm -f "$PLUGIN_DIR/assets/js/neural-map.js"
-          rm -f "$PLUGIN_DIR/assets/css/neural-map.css"
+          # Keep both minified and unminified assets in the release package.
+          # The plugin may load source assets when SCRIPT_DEBUG is enabled.
 
           # Create the zip from the staging parent so the archive root is
           # "sparxstar-data-gap/".
