@@ -1,0 +1,17 @@
+{
+  "name": "sparxstar-data-gap",
+  "version": "1.0.0",
+  "description": "WordPress plugin — Neural Language Map. Build tooling for minification.",
+  "private": true,
+  "scripts": {
+    "build": "npm run build:js && npm run build:css",
+    "build:js": "terser wp-content/plugins/sparxstar-data-gap/assets/js/neural-map.js --compress --mangle --output wp-content/plugins/sparxstar-data-gap/assets/js/neural-map.min.js",
+    "build:css": "postcss wp-content/plugins/sparxstar-data-gap/assets/css/neural-map.css --use cssnano --no-map --output wp-content/plugins/sparxstar-data-gap/assets/css/neural-map.min.css"
+  },
+  "devDependencies": {
+    "cssnano": "^7.0.7",
+    "postcss": "^8.5.3",
+    "postcss-cli": "^11.0.1",
+    "terser": "^5.39.0"
+  }
+}

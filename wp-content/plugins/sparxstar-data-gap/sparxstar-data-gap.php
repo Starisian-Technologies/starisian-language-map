@@ -48,6 +48,9 @@ define( 'SPX_DATA_GAP_VERSION', '1.0.0' );
  * @return void
  */
 function spx_data_gap_register_assets(): void {
+	$script_debug = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG;
+	$suffix       = $script_debug ? '' : '.min';
+
 	// Three.js r128 — self-hosted, no external CDN.
 	wp_register_script(
 		'spx-three-js',
@@ -60,7 +63,7 @@ function spx_data_gap_register_assets(): void {
 	// Neural map visualization — depends on Three.js.
 	wp_register_script(
 		'spx-neural-map',
-		SPX_DATA_GAP_URL . 'assets/js/neural-map.js',
+		SPX_DATA_GAP_URL . "assets/js/neural-map{$suffix}.js",
 		[ 'spx-three-js' ],
 		SPX_DATA_GAP_VERSION,
 		true   // Load in footer.
@@ -69,7 +72,7 @@ function spx_data_gap_register_assets(): void {
 	// Stylesheet.
 	wp_register_style(
 		'spx-neural-map',
-		SPX_DATA_GAP_URL . 'assets/css/neural-map.css',
+		SPX_DATA_GAP_URL . "assets/css/neural-map{$suffix}.css",
 		[],
 		SPX_DATA_GAP_VERSION
 	);

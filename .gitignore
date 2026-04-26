@@ -46,3 +46,11 @@ wp-config.php
 # Note: If you wish to whitelist themes,
 # uncomment the next line
 #/wp-content/themes
+
+# Node / build tooling
+node_modules/
+package-lock.json
+
+# Generated build artefacts — produced by CI / release workflow, not committed.
+wp-content/plugins/sparxstar-data-gap/assets/js/neural-map.min.js
+wp-content/plugins/sparxstar-data-gap/assets/css/neural-map.min.css

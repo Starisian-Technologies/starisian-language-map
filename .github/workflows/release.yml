@@ -1,0 +1,133 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write   # needed to create GitHub Releases
+
+jobs:
+  release:
+    name: Build · Package · Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Derive version from tag ─────────────────────────────────────────────
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
+          echo "tag=$TAG"       >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Release version: $VERSION"
+
+      # ── Update version strings in source files ──────────────────────────────
+      - name: Update PHP plugin header — Version
+        run: |
+          sed -i "s/^ \* Version:.*/ * Version:           ${{ steps.version.outputs.version }}/" \
+            wp-content/plugins/sparxstar-data-gap/sparxstar-data-gap.php
+
+      - name: Update PHP SPX_DATA_GAP_VERSION constant
+        run: |
+          sed -i "s/define( 'SPX_DATA_GAP_VERSION', '[^']*' );/define( 'SPX_DATA_GAP_VERSION', '${{ steps.version.outputs.version }}' );/" \
+            wp-content/plugins/sparxstar-data-gap/sparxstar-data-gap.php
+
+      - name: Update JS @version
+        run: |
+          sed -i "s/@version [0-9][0-9.]*/@version ${{ steps.version.outputs.version }}/" \
+            wp-content/plugins/sparxstar-data-gap/assets/js/neural-map.js
+
+      - name: Update CSS @version
+        run: |
+          sed -i "s/@version [0-9][0-9.]*/@version ${{ steps.version.outputs.version }}/" \
+            wp-content/plugins/sparxstar-data-gap/assets/css/neural-map.css
+
+      - name: PHP lint (post-version-update)
+        run: php -l wp-content/plugins/sparxstar-data-gap/sparxstar-data-gap.php
+
+      # ── Build (minify) ──────────────────────────────────────────────────────
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (minify JS + CSS)
+        run: npm run build
+
+      # ── Package ─────────────────────────────────────────────────────────────
+      - name: Create plugin zip
+        run: |
+          # Assemble a clean staging directory named after the plugin slug.
+          STAGE=$(mktemp -d)
+          PLUGIN_DIR="$STAGE/sparxstar-data-gap"
+          mkdir -p "$PLUGIN_DIR"
+
+          rsync -a \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='package.json' \
+            --exclude='package-lock.json' \
+            --exclude='.github' \
+            --exclude='README.md' \
+            wp-content/plugins/sparxstar-data-gap/ \
+            "$PLUGIN_DIR/"
+
+          # Remove source (unminified) JS/CSS — only ship the .min. files.
+          rm -f "$PLUGIN_DIR/assets/js/neural-map.js"
+          rm -f "$PLUGIN_DIR/assets/css/neural-map.css"
+
+          # Create the zip from the staging parent so the archive root is
+          # "sparxstar-data-gap/".
+          cd "$STAGE"
+          zip -r sparxstar-data-gap.zip sparxstar-data-gap/
+
+          mv sparxstar-data-gap.zip "$GITHUB_WORKSPACE/sparxstar-data-gap.zip"
+
+      # ── SHA-256 checksum ────────────────────────────────────────────────────
+      - name: Compute SHA-256
+        id: sha256
+        run: |
+          HASH=$(sha256sum sparxstar-data-gap.zip | awk '{print $1}')
+          echo "$HASH" > sparxstar-data-gap.zip.sha256
+          echo "hash=$HASH" >> "$GITHUB_OUTPUT"
+          echo "SHA-256: $HASH"
+
+      # ── Publish GitHub Release ──────────────────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "v${{ steps.version.outputs.version }}"
+          body: |
+            ## sparxstar-data-gap v${{ steps.version.outputs.version }}
+
+            ### Installation
+            1. Download `sparxstar-data-gap.zip` below.
+            2. In WordPress → **Plugins → Add New → Upload Plugin**, select the zip.
+            3. Activate the plugin.
+
+            ### Integrity
+            Verify the download with the SHA-256 checksum:
+            ```
+            ${{ steps.sha256.outputs.hash }}  sparxstar-data-gap.zip
+            ```
+            The checksum file is also attached as `sparxstar-data-gap.zip.sha256`.
+
+            ### Changelog
+            See [README.md](https://github.com/${{ github.repository }}/blob/main/README.md) for full details.
+          files: |
+            sparxstar-data-gap.zip
+            sparxstar-data-gap.zip.sha256
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: false
