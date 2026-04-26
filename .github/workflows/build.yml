@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read   # minimal — this workflow only reads the repo
+
 jobs:
   build:
     name: Minify JS + CSS · PHP lint
