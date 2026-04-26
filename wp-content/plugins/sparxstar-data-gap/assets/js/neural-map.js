@@ -12,7 +12,7 @@
 ( function ( THREE ) {
 	'use strict';
 
-	// ─── Settings passed from PHP via wp_localize_script ─────────────────────
+	// ─── Settings defined from PHP via wp_add_inline_script ──────────────────
 	var settings = ( typeof SPX_NEURAL_MAP_SETTINGS !== 'undefined' )
 		? SPX_NEURAL_MAP_SETTINGS
 		: { containerId: 'spx-neural-map' };
