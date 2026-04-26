@@ -51,6 +51,6 @@ wp-config.php
 node_modules/
 package-lock.json
 
-# Generated build artefacts — produced by CI / release workflow, not committed.
+# Generated build artifacts — produced by CI / release workflow, not committed.
 wp-content/plugins/sparxstar-data-gap/assets/js/neural-map.min.js
 wp-content/plugins/sparxstar-data-gap/assets/css/neural-map.min.css
