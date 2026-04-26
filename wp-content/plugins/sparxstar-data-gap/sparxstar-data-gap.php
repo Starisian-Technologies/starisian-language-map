@@ -138,12 +138,12 @@ function spx_data_gap_shortcode( $atts ): string {
 	// Build language-family legend entries for accessibility / non-JS users.
 	$legend_items = spx_data_gap_legend_html();
 
-	// Height as inline style (CSS variable lets the stylesheet adapt).
+	// Height as inline style for the map container.
 	$height_style = esc_attr( (string) $height . 'px' );
 
 	ob_start();
 	?>
-	<div class="spx-neural-map-wrap" style="--spx-map-height:<?php echo $height_style; ?>">
+	<div class="spx-neural-map-wrap">
 		<p class="spx-neural-map-heading" aria-hidden="true">
 			<?php echo esc_html( $heading ); ?>
 		</p>
