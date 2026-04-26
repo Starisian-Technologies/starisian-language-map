@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPARXSTAR — The Data Gap</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500&family=Noto+Sans+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+@font-face {
+  font-family: 'Dune Rise';
+  src: url('https://db.onlinewebfonts.com/t/3dc0e03af59b35eb8d58e28b4d15ee5e.woff2') format('woff2'),
+       url('https://db.onlinewebfonts.com/t/3dc0e03af59b35eb8d58e28b4d15ee5e.woff') format('woff');
+  font-weight: normal; font-style: normal;
+}
+</style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;}
+html,body{width:100%;height:100%;overflow:hidden;background:#04040e;font-family:'Noto Sans',sans-serif;color:#fff;font-weight:500;}
+canvas{position:absolute;top:0;left:0;display:block;}
+#c3d{width:100%;height:100%;cursor:crosshair;z-index:1;}
+
+/* WORDMARK */
+#wordmark{position:absolute;top:32px;left:40px;z-index:20;}
+#wm-title{font-size:14px;font-weight:400;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.92);font-family:'Dune Rise','Noto Sans',sans-serif;}
+#wm-sub{font-family:'Noto Sans Mono',monospace;font-size:9px;font-weight:500;color:rgba(255,255,255,0.28);letter-spacing:0.14em;text-transform:uppercase;margin-top:3px;}
+
+/* VIEW TOGGLE */
+#view-wrap{position:absolute;top:32px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:0;}
+.vtab{
+  padding:8px 22px;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;font-weight:500;
+  cursor:pointer;border:1px solid rgba(255,255,255,0.12);background:rgba(0,0,0,0.4);
+  color:rgba(255,255,255,0.4);transition:all 0.25s;font-family:'Noto Sans',sans-serif;
+}
+.vtab:first-child{border-radius:3px 0 0 3px;}
+.vtab:last-child{border-radius:0 3px 3px 0;border-left:none;}
+.vtab.active{background:rgba(255,255,255,0.09);color:rgba(255,255,255,0.9);border-color:rgba(255,255,255,0.3);}
+.vtab:hover:not(.active){background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.65);}
+
+/* LEGEND - GLOBE */
+#globe-legend{
+  position:absolute;top:32px;right:36px;z-index:20;
+  display:flex;flex-direction:column;gap:5px;align-items:flex-end;
+  opacity:0;pointer-events:none;transition:opacity 0.4s;
+}
+#globe-legend.vis{opacity:1;pointer-events:auto;}
+#gl-title{font-family:'Noto Sans Mono',monospace;font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:4px;}
+.gl-row{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:500;color:rgba(255,255,255,0.65);}
+.gl-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+
+/* LEGEND - NEURAL */
+#net-legend{
+  position:absolute;top:32px;right:36px;z-index:20;
+  display:flex;flex-direction:column;gap:4px;align-items:flex-end;
+  opacity:0;pointer-events:none;transition:opacity 0.4s;
+}
+#net-legend.vis{opacity:1;pointer-events:auto;}
+#nl-title{font-family:'Noto Sans Mono',monospace;font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:4px;}
+.nl-row{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:500;color:rgba(255,255,255,0.65);}
+.nl-row.clickable{cursor:pointer;transition:color 0.2s;}
+.nl-row.clickable:hover{color:#fff;}
+.nl-row.clickable.active-crackle{color:#fff;}
+.nl-line{width:22px;height:2px;flex-shrink:0;border-radius:1px;}
+
+/* INFO */
+#info{
+  position:absolute;bottom:40px;left:40px;z-index:20;max-width:340px;
+}
+#info-label{font-family:'Noto Sans Mono',monospace;font-size:9px;font-weight:500;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.28);margin-bottom:6px;}
+#info-text{font-size:12px;line-height:1.75;color:rgba(255,255,255,0.65);font-weight:500;}
+
+/* TOOLTIP */
+#tip{
+  position:absolute;z-index:30;background:rgba(4,4,14,0.92);
+  border:1px solid rgba(255,255,255,0.12);border-radius:6px;
+  padding:10px 14px;font-size:11px;line-height:1.6;
+  pointer-events:none;display:none;min-width:160px;
+}
+#tip-city{font-weight:500;font-size:13px;color:#fff;margin-bottom:4px;}
+#tip-rows{color:rgba(255,255,255,0.6);}
+.tip-bar{display:flex;align-items:center;gap:8px;margin-top:3px;}
+.tip-label{font-family:'Noto Sans Mono',monospace;font-size:9px;font-weight:500;color:rgba(255,255,255,0.4);width:52px;}
+.tip-track{flex:1;height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;}
+.tip-fill{height:100%;border-radius:2px;}
+
+/* SPARK */
+#spark-btn{
+  position:absolute;bottom:40px;left:50%;transform:translateX(-50%);z-index:20;
+  background:transparent;border:1px solid rgba(255,255,255,0.18);border-radius:30px;
+  padding:9px 28px;cursor:pointer;font-family:'Noto Sans',sans-serif;
+  font-size:10px;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;
+  color:rgba(255,255,255,0.65);transition:all 0.3s;
+}
+#spark-btn:hover{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.35);color:#fff;}
+#spark-btn.on{border-color:rgba(100,80,220,0.7);color:rgba(180,160,255,0.9);}
+
+/* MORPH FLASH */
+#flash{position:absolute;inset:0;background:#04040e;opacity:0;pointer-events:none;z-index:16;transition:opacity 0.3s;}
+#flash.go{opacity:0.8;}
+
+/* STATS BAR - globe view */
+#stats{
+  position:absolute;bottom:40px;right:36px;z-index:20;
+  display:flex;flex-direction:column;gap:8px;align-items:flex-end;
+  opacity:0;pointer-events:none;transition:opacity 0.4s;
+}
+#stats.vis{opacity:1;}
+.stat-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:8px 14px;text-align:right;}
+.stat-num{font-size:20px;font-weight:500;color:#fff;}
+.stat-lbl{font-family:'Noto Sans Mono',monospace;font-size:9px;font-weight:500;color:rgba(255,255,255,0.3);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;}
+
+@media(max-width:640px){
+  #wordmark{left:16px;top:16px;}
+  #view-wrap{top:auto;bottom:110px;left:50%;transform:translateX(-50%);}
+  #info{display:none;}
+  #globe-legend,#net-legend{top:auto;bottom:160px;right:16px;}
+  #spark-btn{bottom:20px;}
+  #stats{bottom:auto;top:70px;right:16px;}
+}
+</style>
+</head>
+<body>
+
+<div id="wordmark">
+  <div id="wm-title">The Data Gap</div>
+  <div id="wm-sub">Sovereign Knowledge Network</div>
+</div>
+
+<div id="view-wrap">
+  <button class="vtab active" data-v="net">Language Inter-Connectivity</button>
+  <button class="vtab" data-v="globe">Internet Presence</button>
+</div>
+
+<!-- Neural net legend -->
+<div id="net-legend" class="vis">
+  <div id="nl-title">Cultural relatedness</div>
+  <div class="nl-row clickable" data-edge="bantu"><div class="nl-line" style="background:#7F77DD;height:3px;"></div>Bantu language family</div>
+  <div class="nl-row clickable" data-edge="trade"><div class="nl-line" style="background:#1D9E75;height:2px;"></div>Trade route lineage</div>
+  <div class="nl-row clickable" data-edge="diaspora"><div class="nl-line" style="background:#D85A30;height:2px;"></div>Diaspora / colonial link</div>
+  <div class="nl-row clickable" data-edge="distant"><div class="nl-line" style="background:rgba(255,255,255,0.15);height:1px;"></div>Distant relatedness</div>
+</div>
+
+<!-- Globe legend -->
+<div id="globe-legend">
+  <div id="gl-title">Content Density — internet presence</div>
+  <div class="gl-row"><div class="gl-dot" style="background:#b2d8ff;"></div>85–100 · Sovereign producer</div>
+  <div class="gl-row"><div class="gl-dot" style="background:#5599cc;"></div>60–85 · Established presence</div>
+  <div class="gl-row"><div class="gl-dot" style="background:#cc7700;"></div>35–60 · Dependent / emerging</div>
+  <div class="gl-row"><div class="gl-dot" style="background:#661111;"></div>0–35 · Near invisible online</div>
+  <div class="gl-row" style="margin-top:4px;">
+    <div style="width:30px;height:2px;background:rgba(100,150,255,0.6);border-radius:1px;"></div>Sovereign data pipe
+  </div>
+  <div class="gl-row">
+    <div style="width:30px;height:1px;background:rgba(100,100,150,0.25);border-radius:1px;"></div>Dependent outflow
+  </div>
+</div>
+
+<div id="info">
+  <div id="info-label">What you're seeing</div>
+  <div id="info-text">33% of world languages are African. Each node is a language community plotted by cultural relatedness — not geography. The dense African core shows ancient interconnection invisible on any map.</div>
+</div>
+
+<div id="stats">
+  <div class="stat-card"><div class="stat-num" id="stat-gap">—</div><div class="stat-lbl">Avg latency gap · Africa</div></div>
+  <div class="stat-card"><div class="stat-num" id="stat-content">—</div><div class="stat-lbl">Avg content density · Africa</div></div>
+</div>
+
+<button id="spark-btn">Spark sovereignty</button>
+
+<div id="tip">
+  <div id="tip-city"></div>
+  <div id="tip-rows">
+    <div class="tip-bar"><span class="tip-label">Usage</span><div class="tip-track"><div class="tip-fill" id="tf-usage" style="background:#7F77DD;"></div></div><span id="tv-usage"></span></div>
+    <div class="tip-bar"><span class="tip-label">Content</span><div class="tip-track"><div class="tip-fill" id="tf-content" style="background:#1D9E75;"></div></div><span id="tv-content"></span></div>
+    <div class="tip-bar"><span class="tip-label">Gap</span><div class="tip-track"><div class="tip-fill" id="tf-gap" style="background:#D85A30;"></div></div><span id="tv-gap"></span></div>
+  </div>
+</div>
+
+<div id="flash"></div>
+<canvas id="c3d"></canvas>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const WCI_DATA = [
+  {city:"Banjul",country:"Gambia",lat:13.45,lng:-16.57,usage:49.5,content:14.1,gap:35.4},
+  {city:"Lagos",country:"Nigeria",lat:6.52,lng:3.38,usage:58.4,content:44.8,gap:13.6},
+  {city:"Abuja",country:"Nigeria",lat:9.07,lng:7.4,usage:51.0,content:38.2,gap:12.8},
+  {city:"Accra",country:"Ghana",lat:5.56,lng:-0.2,usage:72.2,content:31.5,gap:40.7},
+  {city:"Abidjan",country:"Côte d'Ivoire",lat:5.35,lng:-4.01,usage:41.4,content:25.1,gap:16.3},
+  {city:"Dakar",country:"Senegal",lat:14.69,lng:-17.44,usage:60.1,content:22.4,gap:37.7},
+  {city:"Freetown",country:"Sierra Leone",lat:8.49,lng:-13.23,usage:25.1,content:9.8,gap:15.3},
+  {city:"Nairobi",country:"Kenya",lat:-1.29,lng:36.82,usage:50.6,content:40.1,gap:10.5},
+  {city:"Addis Ababa",country:"Ethiopia",lat:9.03,lng:38.74,usage:21.9,content:18.7,gap:3.2},
+  {city:"Dar es Salaam",country:"Tanzania",lat:-6.79,lng:39.21,usage:31.2,content:21.0,gap:10.2},
+  {city:"Kampala",country:"Uganda",lat:0.32,lng:32.58,usage:8.9,content:19.5,gap:-10.6},
+  {city:"Kigali",country:"Rwanda",lat:-1.94,lng:30.06,usage:31.7,content:26.8,gap:4.9},
+  {city:"Djibouti City",country:"Djibouti",lat:11.59,lng:43.15,usage:65.3,content:12.0,gap:53.3},
+  {city:"Johannesburg",country:"South Africa",lat:-26.2,lng:28.04,usage:78.4,content:62.4,gap:16.0},
+  {city:"Cape Town",country:"South Africa",lat:-33.93,lng:18.42,usage:78.4,content:52.1,gap:26.3},
+  {city:"Luanda",country:"Angola",lat:-8.84,lng:13.23,usage:40.7,content:15.4,gap:25.3},
+  {city:"Lusaka",country:"Zambia",lat:-15.42,lng:28.28,usage:17.1,content:14.2,gap:2.9},
+  {city:"Harare",country:"Zimbabwe",lat:-17.83,lng:31.05,usage:41.6,content:17.8,gap:23.8},
+  {city:"Brasília",country:"Brazil",lat:-15.78,lng:-47.93,usage:84.5,content:55.2,gap:29.3},
+  {city:"São Paulo",country:"Brazil",lat:-23.55,lng:-46.63,usage:90.1,content:74.5,gap:15.6},
+  {city:"Tokyo",country:"Japan",lat:35.69,lng:139.69,usage:85.5,content:94.7,gap:-9.2},
+  {city:"Beijing",country:"China",lat:39.91,lng:116.39,usage:91.6,content:98.2,gap:-6.6},
+  {city:"New Delhi",country:"India",lat:28.61,lng:77.21,usage:70.0,content:48.6,gap:21.4},
+  {city:"Tehran",country:"Iran",lat:35.69,lng:51.39,usage:85.3,content:58.1,gap:27.2},
+  {city:"Baghdad",country:"Iraq",lat:33.34,lng:44.4,usage:81.5,content:22.4,gap:59.1},
+  {city:"Riyadh",country:"Saudi Arabia",lat:24.69,lng:46.72,usage:85.4,content:68.2,gap:17.2},
+  {city:"Washington D.C.",country:"USA",lat:38.91,lng:-77.04,usage:100.0,content:99.1,gap:0.9},
+  {city:"London",country:"UK",lat:51.51,lng:-0.13,usage:98.2,content:96.5,gap:1.7},
+  {city:"Paris",country:"France",lat:48.86,lng:2.35,usage:88.7,content:89.2,gap:-0.5},
+  {city:"Berlin",country:"Germany",lat:52.52,lng:13.4,usage:93.5,content:91.8,gap:1.7},
+  {city:"Ottawa",country:"Canada",lat:45.42,lng:-75.69,usage:94.4,content:82.5,gap:11.9},
+  {city:"Brussels",country:"Belgium",lat:50.85,lng:4.35,usage:95.8,content:88.6,gap:7.2},
+  {city:"Amsterdam",country:"Netherlands",lat:52.37,lng:4.9,usage:97.0,content:94.2,gap:2.8},
+  {city:"Rome",country:"Italy",lat:41.9,lng:12.5,usage:89.2,content:78.4,gap:10.8},
+  {city:"Madrid",country:"Spain",lat:40.42,lng:-3.7,usage:87.2,content:75.1,gap:12.1},
+  {city:"Lisbon",country:"Portugal",lat:38.72,lng:-9.14,usage:84.6,content:70.3,gap:14.3},
+  {city:"Ankara",country:"Turkey",lat:39.93,lng:32.85,usage:78.1,content:62.7,gap:15.4},
+  {city:"Athens",country:"Greece",lat:37.98,lng:23.73,usage:86.3,content:58.2,gap:28.1},
+  {city:"Oslo",country:"Norway",lat:59.91,lng:10.75,usage:99.0,content:91.5,gap:7.5},
+  {city:"Copenhagen",country:"Denmark",lat:55.68,lng:12.57,usage:99.8,content:92.1,gap:7.7},
+  {city:"Helsinki",country:"Finland",lat:60.17,lng:24.94,usage:93.7,content:89.7,gap:4.0},
+  {city:"Stockholm",country:"Sweden",lat:59.33,lng:18.07,usage:96.4,content:91.2,gap:5.2},
+  {city:"Warsaw",country:"Poland",lat:52.23,lng:21.01,usage:93.8,content:68.4,gap:25.4},
+  {city:"Prague",country:"Czechia",lat:50.08,lng:14.43,usage:87.7,content:74.1,gap:13.6},
+  {city:"Budapest",country:"Hungary",lat:47.5,lng:19.04,usage:93.8,content:71.0,gap:22.8},
+  {city:"Bucharest",country:"Romania",lat:44.43,lng:26.1,usage:85.0,content:54.2,gap:30.8},
+  {city:"Sofia",country:"Bulgaria",lat:42.7,lng:23.32,usage:82.4,content:51.5,gap:30.9},
+  {city:"Bratislava",country:"Slovakia",lat:48.15,lng:17.11,usage:88.0,content:62.1,gap:25.9},
+  {city:"Zagreb",country:"Croatia",lat:45.81,lng:15.98,usage:83.6,content:58.0,gap:25.6},
+  {city:"Ljubljana",country:"Slovenia",lat:46.05,lng:14.51,usage:89.1,content:66.4,gap:22.7},
+  {city:"Tallinn",country:"Estonia",lat:59.44,lng:24.75,usage:92.2,content:84.3,gap:7.9},
+  {city:"Riga",country:"Latvia",lat:56.95,lng:24.11,usage:92.7,content:72.1,gap:20.6},
+  {city:"Vilnius",country:"Lithuania",lat:54.69,lng:25.28,usage:89.2,content:70.5,gap:18.7},
+  {city:"Tirana",country:"Albania",lat:41.33,lng:19.82,usage:85.9,content:32.4,gap:53.5},
+  {city:"Skopje",country:"N. Macedonia",lat:41.99,lng:21.43,usage:93.1,content:42.1,gap:51.0},
+  {city:"Podgorica",country:"Montenegro",lat:42.44,lng:19.26,usage:88.9,content:38.6,gap:50.3},
+  {city:"Reykjavík",country:"Iceland",lat:64.14,lng:-21.9,usage:98.2,content:87.1,gap:11.1},
+  {city:"Luxembourg",country:"Luxembourg",lat:49.61,lng:6.13,usage:99.1,content:90.4,gap:8.7},
+  {city:"New York",country:"USA",lat:40.71,lng:-74.01,usage:99.4,content:97.8,gap:1.6},
+  {city:"San Francisco",country:"USA",lat:37.77,lng:-122.42,usage:98.2,content:98.5,gap:-0.3},
+  {city:"Los Angeles",country:"USA",lat:34.05,lng:-118.24,usage:96.5,content:92.3,gap:4.2},
+  {city:"San Diego",country:"USA",lat:32.72,lng:-117.16,usage:92.1,content:84.0,gap:8.1},
+  {city:"Toronto",country:"Canada",lat:43.65,lng:-79.38,usage:94.6,content:88.2,gap:6.4},
+  {city:"Mexico City",country:"Mexico",lat:19.43,lng:-99.13,usage:82.3,content:68.4,gap:13.9},
+  {city:"Guatemala City",country:"Guatemala",lat:14.64,lng:-90.51,usage:56.8,content:31.2,gap:25.6},
+  {city:"Tegucigalpa",country:"Honduras",lat:14.09,lng:-87.21,usage:51.4,content:24.5,gap:26.9},
+  {city:"Buenos Aires",country:"Argentina",lat:-34.6,lng:-58.38,usage:86.4,content:65.2,gap:21.2},
+  {city:"Seoul",country:"South Korea",lat:37.57,lng:126.98,usage:98.7,content:96.4,gap:2.3},
+  {city:"Jakarta",country:"Indonesia",lat:-6.21,lng:106.85,usage:84.5,content:45.2,gap:39.3},
+  {city:"Bangkok",country:"Thailand",lat:13.75,lng:100.52,usage:81.2,content:52.1,gap:29.1},
+  {city:"Singapore",country:"Singapore",lat:1.35,lng:103.82,usage:97.5,content:93.8,gap:3.7},
+  {city:"Sydney",country:"Australia",lat:-33.87,lng:151.21,usage:94.2,content:88.5,gap:5.7},
+  {city:"Auckland",country:"New Zealand",lat:-36.86,lng:174.77,usage:91.8,content:84.2,gap:7.6},
+  {city:"Suva",country:"Fiji",lat:-18.14,lng:178.44,usage:45.6,content:22.1,gap:23.5},
+  {city:"Dubai",country:"UAE",lat:25.2,lng:55.27,usage:97.1,content:74.8,gap:22.3},
+  {city:"Doha",country:"Qatar",lat:25.29,lng:51.53,usage:96.8,content:70.5,gap:26.3},
+  {city:"Amman",country:"Jordan",lat:31.95,lng:35.91,usage:68.3,content:52.1,gap:16.2},
+  {city:"Mumbai",country:"India",lat:19.08,lng:72.88,usage:88.6,content:61.4,gap:27.2},
+  {city:"Bangalore",country:"India",lat:12.97,lng:77.59,usage:84.1,content:78.2,gap:5.9},
+  {city:"Karachi",country:"Pakistan",lat:24.86,lng:67.01,usage:62.7,content:34.1,gap:28.6},
+  {city:"Dhaka",country:"Bangladesh",lat:23.72,lng:90.41,usage:65.4,content:38.7,gap:26.7},
+  {city:"Colombo",country:"Sri Lanka",lat:6.93,lng:79.85,usage:58.2,content:41.5,gap:16.7},
+  {city:"Dublin",country:"Ireland",lat:53.33,lng:-6.25,usage:98.2,content:94.5,gap:3.7},
+  {city:"Bern",country:"Switzerland",lat:46.95,lng:7.45,usage:95.6,content:92.1,gap:3.5},
+  {city:"Vienna",country:"Austria",lat:48.21,lng:16.37,usage:95.0,content:88.4,gap:6.6},
+  {city:"Belgrade",country:"Serbia",lat:44.8,lng:20.46,usage:85.2,content:63.4,gap:21.8},
+  {city:"Minsk",country:"Belarus",lat:53.9,lng:27.57,usage:91.1,content:52.3,gap:38.8},
+  {city:"Kyiv",country:"Ukraine",lat:50.45,lng:30.52,usage:92.0,content:78.2,gap:13.8},
+  {city:"Chisinau",country:"Moldova",lat:47.01,lng:28.86,usage:86.4,content:45.1,gap:41.3},
+  {city:"Sarajevo",country:"Bosnia & Herz.",lat:43.85,lng:18.38,usage:78.9,content:34.2,gap:44.7},
+  {city:"Nicosia",country:"Cyprus",lat:35.17,lng:33.36,usage:93.1,content:70.5,gap:22.6},
+  {city:"Yerevan",country:"Armenia",lat:40.18,lng:44.51,usage:82.5,content:48.2,gap:34.3},
+  {city:"Baku",country:"Azerbaijan",lat:40.41,lng:49.87,usage:89.0,content:42.1,gap:46.9},
+  {city:"Vaduz",country:"Liechtenstein",lat:47.14,lng:9.52,usage:97.8,content:85.0,gap:12.8}
+];
+
+// Language network nodes — real linguistic families, latent space positioning
+// Layout: African core top-centre, colonial languages bottom, Global North bottom-right
+// x=left-right (neg=West), y=up-down (pos=North in cultural space)
+const LANG_NODES = [
+  // ── AFRICAN CORE ── dense, glowing, culturally central
+  {id:'yoruba',    name:'Yoruba',      family:'niger-congo', x:-1.3, y:1.1, size:2.0},
+  {id:'igbo',      name:'Igbo',        family:'niger-congo', x:-0.8, y:1.3, size:1.6},
+  {id:'hausa',     name:'Hausa',       family:'afroasiatic', x:-0.1, y:1.6, size:1.8},
+  {id:'wolof',     name:'Wolof',       family:'niger-congo', x:-2.0, y:1.2, size:1.4},
+  {id:'swahili',   name:'Swahili',     family:'bantu',       x: 0.4, y:0.9, size:2.0},
+  {id:'amharic',   name:'Amharic',     family:'afroasiatic', x: 1.1, y:1.2, size:1.6},
+  {id:'oromo',     name:'Oromo',       family:'afroasiatic', x: 1.3, y:0.8, size:1.3},
+  {id:'zulu',      name:'Zulu',        family:'bantu',       x:-0.1, y:0.4, size:1.5},
+  {id:'xhosa',     name:'Xhosa',       family:'bantu',       x:-0.5, y:0.2, size:1.4},
+  {id:'shona',     name:'Shona',       family:'bantu',       x: 0.4, y:0.5, size:1.3},
+  {id:'akan',      name:'Akan/Twi',    family:'niger-congo', x:-1.2, y:0.7, size:1.4},
+  {id:'fula',      name:'Fula',        family:'niger-congo', x:-1.7, y:1.0, size:1.3},
+  {id:'bambara',   name:'Bambara',     family:'mande',       x:-1.4, y:1.4, size:1.2},
+  {id:'lingala',   name:'Lingala',     family:'bantu',       x:-0.2, y:1.1, size:1.3},
+  {id:'kinyarwanda',name:'Kinyarwanda',family:'bantu',       x: 0.6, y:0.7, size:1.2},
+  {id:'somali',    name:'Somali',      family:'afroasiatic', x: 1.5, y:1.3, size:1.3},
+  {id:'tigrinya',  name:'Tigrinya',    family:'afroasiatic', x: 1.2, y:1.5, size:1.1},
+  {id:'kimbundu',  name:'Kimbundu',    family:'bantu',       x:-0.7, y:0.6, size:1.0},
+  {id:'luganda',   name:'Luganda',     family:'bantu',       x: 0.2, y:0.7, size:1.0},
+  {id:'mandinka',  name:'Mandinka',    family:'mande',       x:-2.1, y:0.8, size:1.1},
+  {id:'krio',      name:'Krio',        family:'creole',      x:-2.3, y:1.0, size:1.0},
+  // ── MIDDLE EAST & SOUTH ASIA ──
+  {id:'arabic',    name:'Arabic',      family:'afroasiatic', x: 2.0, y:0.6, size:2.2},
+  {id:'hindi',     name:'Hindi',       family:'indo-aryan',  x: 2.6, y:0.9, size:2.0},
+  {id:'urdu',      name:'Urdu',        family:'indo-aryan',  x: 2.7, y:0.5, size:1.5},
+  {id:'bengali',   name:'Bengali',     family:'indo-aryan',  x: 2.9, y:1.1, size:1.5},
+  {id:'persian',   name:'Persian',     family:'iranian',     x: 1.9, y:0.2, size:1.4},
+  {id:'turkish',   name:'Turkish',     family:'turkic',      x: 1.4, y:-0.3, size:1.4},
+  {id:'tamil',     name:'Tamil',       family:'dravidian',   x: 2.4, y:-0.1, size:1.4},
+  {id:'sinhala',   name:'Sinhala',     family:'indo-aryan',  x: 2.5, y:-0.4, size:1.0},
+  {id:'kannada',   name:'Kannada',     family:'dravidian',   x: 2.3, y: 0.3, size:1.1},
+  // ── SOUTHEAST & EAST ASIA ──
+  {id:'mandarin',  name:'Mandarin',    family:'sino-tibetan',x: 3.0, y:-0.8, size:2.4},
+  {id:'japanese',  name:'Japanese',    family:'japonic',     x: 3.4, y:-1.2, size:1.8},
+  {id:'korean',    name:'Korean',      family:'koreanic',    x: 3.2, y:-0.5, size:1.6},
+  {id:'malay',     name:'Malay/Indonesian',family:'austronesian',x:3.0,y:0.1,size:1.5},
+  {id:'tagalog',   name:'Tagalog',     family:'austronesian',x: 3.1, y:-0.2, size:1.3},
+  {id:'thai',      name:'Thai',        family:'kra-dai',     x: 2.8, y:-0.4, size:1.2},
+  {id:'vietnamese',name:'Vietnamese',  family:'austroasiatic',x:2.9,y:-0.7, size:1.3},
+  {id:'maori',     name:'Māori',       family:'austronesian',x: 3.3, y:0.4, size:1.0},
+  // ── AMERICAS ──
+  {id:'spanish',   name:'Spanish',     family:'romance',     x:-2.5, y:-1.2, size:2.2},
+  {id:'portuguese',name:'Portuguese',  family:'romance',     x:-2.2, y:-0.8, size:1.8},
+  {id:'nahuatl',   name:'Nahuatl',     family:'uto-aztecan', x:-3.1, y:-0.3, size:1.1},
+  {id:'quechua',   name:'Quechua',     family:'quechuan',    x:-2.8, y:-0.5, size:1.1},
+  {id:'kiche',     name:"K'iche'",     family:'mayan',       x:-3.0, y:-0.1, size:1.0},
+  // ── EUROPEAN CORE ── bottom centre — dominant digital presence
+  {id:'english',   name:'English',     family:'germanic',    x:-0.5, y:-2.2, size:2.8},
+  {id:'french',    name:'French',      family:'romance',     x:-1.4, y:-2.0, size:2.1},
+  {id:'german',    name:'German',      family:'germanic',    x: 0.5, y:-2.4, size:2.0},
+  {id:'dutch',     name:'Dutch',       family:'germanic',    x: 0.1, y:-2.1, size:1.6},
+  {id:'italian',   name:'Italian',     family:'romance',     x:-0.9, y:-1.8, size:1.7},
+  {id:'polish',    name:'Polish',      family:'slavic',      x: 1.0, y:-2.0, size:1.5},
+  {id:'russian',   name:'Russian',     family:'slavic',      x: 1.5, y:-2.0, size:1.9},
+  {id:'ukrainian', name:'Ukrainian',   family:'slavic',      x: 1.4, y:-1.7, size:1.3},
+  {id:'swedish',   name:'Swedish',     family:'germanic',    x: 0.3, y:-2.6, size:1.4},
+  {id:'norwegian', name:'Norwegian',   family:'germanic',    x: 0.0, y:-2.7, size:1.3},
+  {id:'danish',    name:'Danish',      family:'germanic',    x:-0.2, y:-2.6, size:1.3},
+  {id:'irish',     name:'Irish',       family:'celtic',      x:-1.6, y:-2.2, size:1.0},
+];
+
+// Cultural connections — [nodeA, nodeB, type, weight]
+// types: 'bantu'=language family, 'trade'=trade/contact, 'diaspora'=colonial/migration, 'distant'=weak link
+const LANG_EDGES = [
+  // ── BANTU FAMILY (West-to-East African spine)
+  ['swahili','zulu','bantu',0.92],['swahili','lingala','bantu',0.88],
+  ['swahili','kinyarwanda','bantu',0.90],['swahili','shona','bantu',0.85],
+  ['swahili','luganda','bantu',0.87],['swahili','kimbundu','bantu',0.80],
+  ['zulu','xhosa','bantu',0.96],['zulu','shona','bantu',0.84],
+  ['xhosa','shona','bantu',0.82],['lingala','kinyarwanda','bantu',0.83],
+  ['lingala','kimbundu','bantu',0.80],['kinyarwanda','luganda','bantu',0.85],
+  ['yoruba','igbo','bantu',0.78],['akan','yoruba','bantu',0.70],
+  ['akan','fula','bantu',0.65],['mandinka','bambara','bantu',0.88],
+  ['fula','mandinka','bantu',0.82],['fula','wolof','bantu',0.72],
+  // ── AFROASIATIC / SEMITIC FAMILY
+  ['amharic','tigrinya','bantu',0.92],['amharic','somali','bantu',0.62],
+  ['amharic','hausa','bantu',0.58],['somali','arabic','trade',0.78],
+  // ── CREOLE / CONTACT LANGUAGES
+  ['krio','yoruba','diaspora',0.70],['krio','english','diaspora',0.85],
+  ['krio','wolof','diaspora',0.60],
+  // ── TRADE ROUTES (Indian Ocean & Sahara)
+  ['swahili','arabic','trade',0.88],['swahili','hindi','trade',0.75],
+  ['hausa','arabic','trade',0.82],['amharic','arabic','trade',0.72],
+  ['wolof','arabic','trade',0.55],['hindi','arabic','trade',0.68],
+  ['tamil','arabic','trade',0.52],['persian','arabic','trade',0.75],
+  ['turkish','arabic','trade',0.72],['malay','arabic','trade',0.60],
+  // ── INDO-ARYAN FAMILY
+  ['hindi','urdu','bantu',0.94],['hindi','bengali','bantu',0.80],
+  ['hindi','sinhala','bantu',0.65],['urdu','bengali','bantu',0.75],
+  ['hindi','kannada','distant',0.45],
+  // ── DRAVIDIAN FAMILY
+  ['tamil','kannada','bantu',0.75],['tamil','sinhala','bantu',0.68],
+  // ── AUSTRONESIAN FAMILY
+  ['tagalog','malay','bantu',0.78],['maori','tagalog','bantu',0.70],
+  ['maori','malay','bantu',0.65],
+  // ── ROMANCE FAMILY (colonial spine)
+  ['spanish','portuguese','diaspora',0.90],['french','italian','bantu',0.80],
+  ['french','spanish','bantu',0.78],['italian','portuguese','bantu',0.75],
+  ['portuguese','italian','bantu',0.72],
+  // ── GERMANIC FAMILY
+  ['english','german','bantu',0.82],['english','dutch','bantu',0.88],
+  ['english','swedish','bantu',0.78],['english','norwegian','bantu',0.80],
+  ['english','danish','bantu',0.79],['german','dutch','bantu',0.90],
+  ['german','swedish','bantu',0.72],['norwegian','swedish','bantu',0.92],
+  ['norwegian','danish','bantu',0.90],['english','irish','bantu',0.65],
+  // ── SLAVIC FAMILY
+  ['russian','polish','bantu',0.80],['russian','ukrainian','bantu',0.88],
+  ['polish','ukrainian','bantu',0.75],
+  // ── COLONIAL / DIASPORA LINKS
+  ['yoruba','portuguese','diaspora',0.75],['igbo','portuguese','diaspora',0.70],
+  ['yoruba','english','diaspora',0.60],['swahili','english','diaspora',0.55],
+  ['kinyarwanda','french','diaspora',0.62],['wolof','french','diaspora',0.72],
+  ['akan','french','diaspora',0.68],['lingala','french','diaspora',0.65],
+  ['nahuatl','spanish','diaspora',0.80],['quechua','spanish','diaspora',0.75],
+  ['kiche','spanish','diaspora',0.78],['malay','english','diaspora',0.60],
+  ['tagalog','spanish','diaspora',0.65],['tagalog','english','diaspora',0.70],
+  // ── CONTACT / LOANWORD BRIDGES
+  ['japanese','mandarin','trade',0.72],['korean','mandarin','trade',0.78],
+  ['korean','japanese','trade',0.68],['vietnamese','mandarin','trade',0.65],
+  ['thai','mandarin','trade',0.55],['malay','tamil','trade',0.52],
+  ['hindi','english','diaspora',0.68],['bengali','english','diaspora',0.62],
+  // ── DISTANT / WEAK LINKS (show global web)
+  ['english','french','distant',0.82],['english','spanish','distant',0.75],
+  ['english','mandarin','distant',0.58],['english','arabic','distant',0.62],
+  ['english','russian','distant',0.55],['english','japanese','distant',0.62],
+  ['english','hindi','distant',0.68],['arabic','persian','distant',0.70],
+  ['spanish','nahuatl','distant',0.45],['portuguese','quechua','distant',0.40],
+  ['russian','turkish','distant',0.50],['french','arabic','distant',0.60],
+];
+
+
+// ─── THREE SETUP ─────────────────────────────────────────────────────────────
+const canvas3d = document.getElementById('c3d');
+const W = ()=>window.innerWidth, H = ()=>window.innerHeight;
+
+const renderer = new THREE.WebGLRenderer({canvas:canvas3d,antialias:true,powerPreference:'high-performance',alpha:false});
+renderer.setSize(W(),H());
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+renderer.setClearColor(0x04040e,1);
+// outputEncoding removed in r152; r128 uses it but we skip for compatibility
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(58,W()/H(),0.1,2000);
+camera.position.set(0,0,28);
+
+// Minimal orbit (manual)
+let autoRotY=0.003, isDragging=false, lastX=0, lastY=0, rotX=0, rotY=0, rotVX=0, rotVY=0;
+canvas3d.addEventListener('mousedown',e=>{isDragging=true;lastX=e.clientX;lastY=e.clientY;rotVX=rotVY=0;});
+window.addEventListener('mouseup',()=>isDragging=false);
+window.addEventListener('mousemove',e=>{
+  if(!isDragging)return;
+  rotVY+=(e.clientX-lastX)*0.004;
+  rotVX+=(e.clientY-lastY)*0.002;
+  lastX=e.clientX;lastY=e.clientY;
+});
+canvas3d.addEventListener('touchstart',e=>{isDragging=true;lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;},{passive:true});
+window.addEventListener('touchend',()=>isDragging=false);
+window.addEventListener('touchmove',e=>{
+  if(!isDragging)return;
+  rotVY+=(e.touches[0].clientX-lastX)*0.004;
+  rotVX+=(e.touches[0].clientY-lastY)*0.002;
+  lastX=e.touches[0].clientX;lastY=e.touches[0].clientY;
+},{passive:true});
+
+const masterGroup = new THREE.Group();
+scene.add(masterGroup);
+
+// ─── STARFIELD ────────────────────────────────────────────────────────────────
+const starGeo=new THREE.BufferGeometry();
+const spos=[];
+for(let i=0;i<8000;i++){
+  const r=THREE.MathUtils.randFloat(80,300);
+  const phi=Math.acos(THREE.MathUtils.randFloatSpread(2));
+  const th=Math.random()*Math.PI*2;
+  spos.push(r*Math.sin(phi)*Math.cos(th),r*Math.sin(phi)*Math.sin(th),r*Math.cos(phi));
+}
+starGeo.setAttribute('position',new THREE.Float32BufferAttribute(spos,3));
+const starMat=new THREE.PointsMaterial({size:0.18,sizeAttenuation:true,color:0xffffff,transparent:true,opacity:0.6,depthWrite:false});
+const starField=new THREE.Points(starGeo,starMat);
+scene.add(starField);
+
+// ─── NEURAL NETWORK (language latent space) ───────────────────────────────────
+const netGroup = new THREE.Group();
+scene.add(netGroup);
+
+const SCALE = 5.5; // world units per latent unit
+const nodeMap = {};
+
+// Build node 3D positions
+const nodeGeo = new THREE.BufferGeometry();
+const nodePos=[], nodeCol=[], nodeSizeArr=[];
+const familyColors={
+  // African language families — purples and violets (the rich cultural core)
+  'bantu':      new THREE.Color(0x7F77DD),
+  'niger-congo':new THREE.Color(0x8F6FDD),
+  'afroasiatic':new THREE.Color(0x9E7DD8),
+  'mande':      new THREE.Color(0x8877CC),
+  'nilo-saharan':new THREE.Color(0x9977BB),
+  'creole':     new THREE.Color(0xAA88EE),
+  // South/SE Asian families — teals and greens
+  'indo-aryan': new THREE.Color(0x2DB88A),
+  'dravidian':  new THREE.Color(0x1D9E75),
+  'austronesian':new THREE.Color(0x1D8E65),
+  'austroasiatic':new THREE.Color(0x2DAA88),
+  'kra-dai':    new THREE.Color(0x28A080),
+  // East Asian families — amber/gold
+  'sino-tibetan':new THREE.Color(0xEF9F27),
+  'japonic':    new THREE.Color(0xDC9020),
+  'koreanic':   new THREE.Color(0xCA8018),
+  // Middle East / Central Asia — warm orange
+  'afroasiatic':new THREE.Color(0x9E7DD8), // already defined, Semitic branch
+  'semitic':    new THREE.Color(0x6B8FD4),
+  'iranian':    new THREE.Color(0xB07018),
+  'turkic':     new THREE.Color(0xAA6820),
+  // European families — corals/reds (dominant digital presence)
+  'germanic':   new THREE.Color(0xE05535),
+  'romance':    new THREE.Color(0xD04828),
+  'slavic':     new THREE.Color(0xC04020),
+  'celtic':     new THREE.Color(0xB83820),
+  // Americas indigenous
+  'uto-aztecan':new THREE.Color(0xF5A623),
+  'quechuan':   new THREE.Color(0xE8981A),
+  'mayan':      new THREE.Color(0xDC8A10),
+  'tupian':     new THREE.Color(0xD07C08),
+  // Fallback
+  'default':    new THREE.Color(0x888888)
+};
+
+LANG_NODES.forEach((n,i)=>{
+  n._idx = i;
+  n._pos3 = new THREE.Vector3(n.x*SCALE, n.y*SCALE, (Math.random()-0.5)*SCALE*1.5);
+  nodeMap[n.id] = n;
+  nodePos.push(n._pos3.x,n._pos3.y,n._pos3.z);
+  const c=familyColors[n.family]||familyColors['default'];
+  nodeCol.push(c.r,c.g,c.b);
+  nodeSizeArr.push(n.size);
+});
+
+nodeGeo.setAttribute('position',new THREE.Float32BufferAttribute(nodePos,3));
+nodeGeo.setAttribute('color',new THREE.Float32BufferAttribute(nodeCol,3));
+
+// Custom point shader for glow — fast always-on shimmer per node
+const nodeMat=new THREE.ShaderMaterial({
+  uniforms:{uTime:{value:0},uBaseSize:{value:0.6},uCrackle:{value:0.0}},
+  vertexShader:`
+    attribute float size;
+    attribute vec3 color;
+    varying vec3 vCol;
+    varying float vFlicker;
+    uniform float uTime,uBaseSize,uCrackle;
+    float hash(float n){return fract(sin(n)*43758.5453);}
+    void main(){
+      vCol=color;
+      // Each node gets its own fast shimmer phase based on position
+      float phase=position.x*2.3+position.y*1.7+position.z*1.1;
+      float breathe=0.78+0.22*sin(uTime*3.5+phase);
+      float fastFlicker=1.0+0.4*sin(uTime*11.0+phase*2.1)*sin(uTime*7.3+phase*0.9);
+      float crackleFlicker=uCrackle>0.0?(0.7+0.3*hash(floor(uTime*20.0)+position.x*9.1)):1.0;
+      vFlicker=fastFlicker;
+      vec4 mv=modelViewMatrix*vec4(position,1.);
+      gl_PointSize=size*uBaseSize*breathe*fastFlicker*crackleFlicker*(880./-mv.z);
+      gl_Position=projectionMatrix*mv;
+    }`,
+  fragmentShader:`
+    varying vec3 vCol;
+    varying float vFlicker;
+    void main(){
+      vec2 c=2.*gl_PointCoord-1.; float d=length(c);
+      if(d>1.)discard;
+      float g=pow(1.-smoothstep(0.,1.,d),1.2);
+      float core=smoothstep(0.22,0.,d)*0.75;
+      gl_FragColor=vec4(vCol*(1.0+core*vFlicker*0.5),(g*0.95+core)*(0.9-0.15*d));
+    }`,
+  transparent:true,depthWrite:false,blending:THREE.AdditiveBlending
+});
+// attach size attribute
+nodeGeo.setAttribute('size',new THREE.Float32BufferAttribute(nodeSizeArr,1));
+const nodeMesh=new THREE.Points(nodeGeo,nodeMat);
+netGroup.add(nodeMesh);
+
+// Labels (canvas texture sprites)
+const labelSprites=[];
+function makeLabel(text,pos,size){
+  const cv=document.createElement('canvas'); cv.width=256; cv.height=48;
+  const ctx=cv.getContext('2d');
+  ctx.font=`${Math.round(10+size*2)}px 'Noto Sans',sans-serif`;
+  ctx.fillStyle='rgba(255,255,255,0.55)';
+  ctx.textAlign='center';
+  ctx.fillText(text,128,30);
+  const tex=new THREE.CanvasTexture(cv);
+  const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false});
+  const sp=new THREE.Sprite(mat);
+  sp.position.copy(pos).add(new THREE.Vector3(0,size*0.18+0.4,0));
+  sp.scale.set(2.8,0.56,1);
+  return sp;
+}
+LANG_NODES.forEach(n=>{
+  const sp=makeLabel(n.name,n._pos3,n.size);
+  netGroup.add(sp);
+  labelSprites.push(sp);
+});
+
+// Edge lines
+function makeEdgeGeo(edgeData){
+  const verts=[]; const cols=[];
+  const edgeColors={
+    'bantu':new THREE.Color(0x7F77DD),
+    'trade':new THREE.Color(0x1D9E75),
+    'diaspora':new THREE.Color(0xD85A30),
+    'distant':new THREE.Color(0x333355)
+  };
+  const edgeWidths={'bantu':1.0,'trade':0.8,'diaspora':0.75,'distant':0.25};
+  edgeData.forEach(([a,b,type,w])=>{
+    const na=nodeMap[a],nb=nodeMap[b];
+    if(!na||!nb)return;
+    const c=edgeColors[type]||new THREE.Color(0x333333);
+    verts.push(na._pos3.x,na._pos3.y,na._pos3.z,nb._pos3.x,nb._pos3.y,nb._pos3.z);
+    const alpha=edgeWidths[type]*w;
+    cols.push(c.r*alpha,c.g*alpha,c.b*alpha,c.r*alpha,c.g*alpha,c.b*alpha);
+  });
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+  return geo;
+}
+const edgeGeo=makeEdgeGeo(LANG_EDGES);
+const edgeMat=new THREE.LineBasicMaterial({vertexColors:THREE.VertexColors,transparent:true,opacity:0.7,depthWrite:false,blending:THREE.AdditiveBlending});
+const edgeMesh=new THREE.LineSegments(edgeGeo,edgeMat);
+netGroup.add(edgeMesh);
+
+// ─── GLOBE ────────────────────────────────────────────────────────────────────
+const globeGroup = new THREE.Group();
+globeGroup.visible = false;
+scene.add(globeGroup);
+
+const GLOB_R = 10;
+
+// Clean solid ocean sphere — very dark navy
+const earthGeo = new THREE.SphereGeometry(GLOB_R, 64, 64);
+const earthMat = new THREE.MeshBasicMaterial({color: 0x040d1a});
+const earthMesh = new THREE.Mesh(earthGeo, earthMat);
+globeGroup.add(earthMesh);
+
+// Grid lines — subtle graticule
+const gridMat = new THREE.LineBasicMaterial({color:0x0a1f3a,transparent:true,opacity:0.18,depthWrite:false});
+function makeLatLng(){
+  const lines=[];
+  for(let lat=-60;lat<=60;lat+=30){
+    const pts=[];
+    for(let lng=0;lng<=360;lng+=3) pts.push(ll2xyz(lat,lng-180,GLOB_R*1.0005));
+    lines.push(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),gridMat));
+  }
+  for(let lng=0;lng<360;lng+=45){
+    const pts=[];
+    for(let lat=-90;lat<=90;lat+=3) pts.push(ll2xyz(lat,lng-180,GLOB_R*1.0005));
+    lines.push(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),gridMat));
+  }
+  return lines;
+}
+makeLatLng().forEach(l=>globeGroup.add(l));
+
+// Africa countries set — declared early so globe label code can use it
+const AFRICA_COUNTRIES=new Set(['Gambia','Nigeria','Ghana','Côte d\'Ivoire','Senegal','Sierra Leone',
+  'Kenya','Ethiopia','Tanzania','Uganda','Rwanda','Djibouti','South Africa','Angola','Zambia','Zimbabwe',
+  'Egypt','Morocco','Tunisia','Algeria','Libya','Congo','Mozambique','Madagascar','Kinshasa']);
+
+// ── EMBEDDED LAND RINGS — no fetch, no CDN dependency, always renders ─────────
+// Format: [lng, lat] pairs (GeoJSON convention). Accurate 110m-resolution outlines.
+const LAND_RINGS = [
+  // Africa
+  [[-5.6,36.0],[-2.4,35.2],[2.0,35.8],[5.5,36.9],[10.2,37.1],[12.5,37.3],[14.5,37.1],[15.2,36.6],[16.6,36.9],[18.5,37.3],[20.0,37.1],[23.7,37.9],[26.2,38.0],[28.2,41.5],[29.5,41.0],[33.5,42.0],[36.9,43.5],[41.7,41.5],[43.2,38.0],[43.5,12.5],[44.9,11.5],[51.1,11.6],[51.6,12.4],[49.8,11.8],[46.0,10.0],[44.9,10.5],[44.0,8.0],[41.9,4.7],[42.6,1.0],[40.9,-2.0],[40.5,-9.5],[36.5,-17.0],[35.8,-22.0],[35.2,-25.0],[32.9,-26.9],[32.0,-29.0],[30.5,-31.5],[29.0,-33.5],[27.0,-34.4],[26.0,-34.0],[22.0,-34.4],[18.4,-33.9],[17.9,-32.9],[16.5,-29.4],[15.1,-22.2],[12.0,-17.0],[11.8,-15.0],[12.5,-6.0],[12.3,-5.0],[9.0,-1.0],[9.5,1.0],[8.8,3.8],[5.0,4.3],[2.7,5.1],[1.6,6.2],[3.8,6.5],[1.0,5.6],[-0.7,5.3],[-3.2,5.1],[-5.0,5.0],[-7.5,4.5],[-8.4,4.6],[-11.4,6.9],[-15.0,10.9],[-15.6,11.5],[-16.7,12.4],[-15.7,13.5],[-17.4,14.7],[-16.8,16.3],[-16.1,18.1],[-16.5,20.0],[-17.0,21.0],[-17.0,27.7],[-13.2,29.0],[-9.5,30.0],[-5.5,32.0],[-5.6,36.0]],
+  // Europe West (Iberia)
+  [[-9.2,38.7],[-9.5,39.5],[-8.8,41.5],[-8.5,43.8],[-1.5,43.4],[-1.8,43.7],[1.8,43.3],[3.2,43.4],[5.2,43.4],[6.0,43.1],[7.4,43.7],[7.7,44.0],[6.9,44.5],[4.0,44.6],[1.4,43.6],[0.5,42.0],[3.3,42.5],[5.0,40.5],[5.6,40.0],[0.2,39.5],[-0.1,38.1],[0.0,37.0],[-0.8,37.6],[-1.9,37.0],[-2.1,36.8],[-5.3,36.0],[-6.5,36.5],[-7.5,37.0],[-7.8,37.8],[-8.8,38.4],[-9.2,38.7]],
+  // Europe mainland + Scandinavia
+  [[5.2,58.0],[8.0,57.5],[8.0,56.0],[6.5,55.5],[5.5,55.0],[4.0,52.5],[3.0,51.5],[2.0,51.0],[0.0,51.5],[-1.5,51.0],[-3.0,51.5],[-5.0,51.0],[-5.5,50.0],[-4.0,50.0],[-3.0,51.0],[-1.0,51.0],[0.0,50.5],[1.5,50.8],[2.0,51.0],[3.5,51.5],[4.0,52.0],[5.5,53.0],[8.0,55.5],[9.0,55.5],[10.0,55.0],[11.5,56.5],[12.5,56.0],[12.5,55.0],[10.5,55.0],[10.0,54.0],[8.5,55.5],[8.0,58.0],[5.2,60.0],[5.3,62.0],[6.0,62.5],[5.0,63.5],[7.0,64.5],[14.5,65.5],[16.0,68.5],[18.0,69.5],[20.0,70.0],[28.0,71.2],[30.0,71.0],[32.0,69.5],[36.0,68.0],[40.0,67.0],[43.0,66.5],[45.0,64.5],[47.0,62.5],[50.0,60.0],[50.5,57.5],[51.5,54.0],[51.0,51.0],[53.5,50.0],[55.0,50.5],[56.0,54.0],[59.0,56.5],[60.0,57.5],[60.5,55.0],[58.5,52.0],[56.0,51.0],[52.0,51.0],[50.0,51.5],[48.0,47.0],[46.5,43.5],[44.0,42.5],[41.0,41.5],[40.5,41.0],[40.0,39.0],[38.5,37.0],[36.5,36.5],[35.0,36.5],[33.0,35.5],[32.0,36.5],[30.0,38.0],[28.0,41.0],[30.0,41.5],[33.0,42.0],[35.0,42.0],[36.5,41.5],[38.5,37.0],[36.2,36.2],[34.8,33.0],[32.5,34.7],[34.0,37.0],[32.5,36.5],[28.0,37.0],[26.5,38.0],[23.7,37.9],[20.0,37.1],[23.5,40.5],[22.5,42.5],[20.5,42.0],[19.5,42.5],[18.5,42.5],[17.5,43.0],[17.0,43.5],[14.0,44.5],[13.5,45.0],[12.5,44.0],[12.0,44.5],[12.5,45.5],[13.5,46.0],[16.0,46.5],[17.0,48.0],[18.0,49.0],[18.5,50.5],[20.5,54.5],[19.5,54.0],[14.5,54.0],[12.5,55.5],[10.5,57.5],[10.0,55.0],[12.0,54.5],[5.2,58.0]],
+  // Scandinavia Baltic
+  [[25.0,60.5],[24.9,60.5],[23.0,59.5],[20.5,60.5],[18.5,59.5],[18.0,59.0],[19.5,57.5],[21.0,57.5],[24.0,57.5],[25.5,58.0],[27.0,57.5],[28.5,57.0],[29.0,57.5],[28.0,58.5],[26.0,59.5],[27.0,60.5],[29.0,61.0],[30.0,61.5],[29.0,62.0],[28.5,65.0],[29.0,69.5],[28.0,71.2],[25.0,60.5]],
+  // Great Britain
+  [[-5.7,50.2],[-3.0,51.5],[-5.0,51.9],[-4.2,52.5],[-4.5,52.8],[-4.8,53.5],[-5.6,54.5],[-5.0,55.0],[-5.5,56.5],[-5.5,57.5],[-5.0,58.5],[-3.0,58.7],[-1.0,58.5],[-1.7,57.5],[-1.6,55.5],[-1.5,55.0],[-0.1,54.0],[0.5,53.0],[1.7,52.0],[1.4,51.8],[1.2,51.0],[0.3,50.9],[-1.0,50.6],[-5.7,50.2]],
+  // Ireland
+  [[-10.0,51.5],[-7.0,52.0],[-6.0,53.0],[-6.3,54.0],[-6.5,55.2],[-7.5,55.3],[-8.5,54.5],[-10.0,54.0],[-10.5,53.0],[-10.0,51.5]],
+  // North America
+  [[-168.0,65.0],[-140.0,60.0],[-137.0,59.5],[-130.0,54.5],[-126.0,50.5],[-124.5,49.0],[-124.0,47.5],[-124.5,43.0],[-124.5,40.5],[-122.5,37.8],[-122.0,36.5],[-121.0,35.5],[-120.5,35.0],[-117.8,33.5],[-117.1,32.5],[-115.0,30.0],[-110.0,23.0],[-106.0,23.0],[-104.0,19.0],[-96.0,16.0],[-92.0,15.7],[-88.5,16.0],[-86.0,16.5],[-83.5,9.0],[-79.5,9.5],[-77.5,8.5],[-76.5,9.0],[-75.5,10.5],[-73.5,11.5],[-72.5,12.5],[-75.0,10.5],[-77.0,8.5],[-79.5,9.0],[-80.0,9.5],[-82.5,9.5],[-83.5,10.0],[-86.0,13.0],[-87.5,13.5],[-89.0,15.5],[-90.5,16.0],[-92.0,15.5],[-90.5,18.5],[-90.0,21.0],[-87.0,23.0],[-97.5,25.5],[-97.0,27.5],[-97.5,28.5],[-96.5,30.0],[-94.0,29.5],[-89.5,29.0],[-88.5,30.0],[-82.5,29.5],[-81.0,25.5],[-80.0,26.0],[-80.5,29.0],[-81.5,30.5],[-80.0,32.5],[-77.5,35.5],[-76.0,36.0],[-75.5,38.0],[-75.0,39.5],[-74.0,40.5],[-72.0,41.5],[-71.0,41.5],[-70.0,42.0],[-70.5,43.5],[-67.0,44.0],[-67.5,47.5],[-69.5,48.0],[-70.0,49.0],[-64.5,48.5],[-65.5,49.5],[-71.0,50.0],[-74.5,51.0],[-79.5,51.5],[-84.0,52.5],[-87.0,56.0],[-83.0,58.0],[-79.5,60.5],[-76.0,62.5],[-78.5,63.5],[-77.5,65.5],[-82.5,66.0],[-86.0,69.5],[-82.0,70.0],[-79.5,72.0],[-84.0,75.5],[-88.0,76.0],[-93.0,75.5],[-96.0,77.0],[-100.0,73.0],[-105.0,72.5],[-110.0,73.0],[-120.0,73.5],[-125.0,72.0],[-130.0,70.0],[-140.5,70.5],[-148.0,70.5],[-157.5,71.0],[-163.0,71.0],[-167.0,68.0],[-168.0,65.0]],
+  // South America
+  [[-81.0,1.0],[-80.0,-1.5],[-80.5,-3.0],[-80.5,-4.5],[-81.0,-5.0],[-79.5,-8.0],[-77.5,-10.0],[-75.5,-14.0],[-75.5,-16.5],[-75.5,-18.5],[-70.5,-18.0],[-69.0,-17.5],[-68.5,-19.0],[-68.5,-22.0],[-70.0,-23.5],[-70.5,-27.0],[-71.5,-30.0],[-71.5,-33.5],[-72.0,-37.0],[-74.0,-41.5],[-73.5,-43.5],[-75.0,-46.5],[-75.5,-50.0],[-68.5,-54.5],[-67.5,-55.9],[-65.0,-55.5],[-65.5,-54.5],[-66.5,-53.0],[-68.5,-52.7],[-69.0,-51.5],[-67.5,-48.0],[-65.5,-46.5],[-64.0,-42.0],[-63.5,-38.0],[-57.5,-34.0],[-53.5,-33.8],[-52.0,-32.0],[-50.0,-28.5],[-48.5,-26.0],[-44.5,-23.0],[-41.0,-21.0],[-39.5,-15.5],[-37.5,-12.5],[-35.0,-9.0],[-34.5,-8.5],[-35.2,-5.8],[-35.5,-5.5],[-44.5,-2.5],[-48.5,-1.5],[-50.5,0.5],[-51.5,4.0],[-57.5,6.0],[-59.5,8.5],[-60.5,9.0],[-63.5,10.0],[-65.0,10.5],[-67.0,10.5],[-72.0,11.5],[-72.5,12.0],[-71.5,12.5],[-70.0,12.5],[-60.0,9.0],[-57.5,6.0],[-54.0,4.5],[-57.0,5.5],[-60.7,6.5],[-62.5,6.0],[-63.0,4.0],[-65.0,1.5],[-67.5,2.0],[-70.0,1.5],[-72.0,2.0],[-74.0,4.0],[-74.5,7.5],[-72.0,11.5],[-75.0,10.5],[-77.5,8.5],[-79.5,9.0],[-80.5,8.0],[-79.5,7.0],[-77.0,7.5],[-75.5,9.0],[-74.5,10.0],[-72.5,12.0],[-67.0,10.5],[-64.0,10.5],[-62.5,10.0],[-61.5,10.5],[-60.5,9.0],[-62.5,6.0],[-65.0,1.5],[-67.5,2.0],[-70.0,1.5],[-72.0,2.0],[-74.5,1.0],[-75.5,0.0],[-76.5,-1.0],[-77.0,-2.0],[-78.0,-3.0],[-81.0,1.0]],
+  // Australia
+  [[128.0,-14.5],[130.0,-12.0],[131.0,-11.5],[132.5,-11.5],[136.0,-12.0],[136.5,-12.5],[136.0,-13.5],[137.0,-16.0],[139.5,-16.5],[141.5,-14.5],[144.5,-14.5],[145.5,-15.5],[146.0,-17.5],[147.5,-19.5],[150.0,-22.0],[151.5,-24.0],[153.0,-26.0],[153.5,-28.0],[153.0,-30.0],[152.5,-31.5],[152.0,-33.0],[151.5,-33.5],[151.0,-34.5],[150.5,-36.0],[150.0,-37.5],[148.5,-38.5],[146.5,-39.0],[146.0,-39.5],[145.0,-38.5],[144.0,-38.0],[142.5,-38.5],[141.5,-38.5],[140.5,-36.5],[139.5,-35.5],[138.5,-35.5],[137.5,-35.5],[136.5,-35.5],[135.5,-35.0],[135.0,-34.5],[131.5,-31.5],[129.0,-33.5],[127.5,-33.5],[126.0,-34.0],[125.5,-33.5],[122.5,-33.5],[115.5,-33.5],[115.0,-29.5],[113.5,-26.0],[114.0,-22.0],[114.5,-20.0],[116.5,-20.5],[119.0,-20.5],[121.5,-19.5],[122.0,-18.0],[122.5,-16.5],[124.5,-15.5],[126.5,-14.5],[128.0,-14.5]],
+  // India subcontinent
+  [[68.0,23.5],[68.5,24.0],[72.5,21.5],[73.5,16.0],[76.5,14.0],[78.0,8.5],[78.5,8.5],[80.0,10.0],[80.5,13.5],[80.0,15.0],[80.5,18.0],[83.0,21.0],[87.5,22.0],[88.0,22.5],[88.5,23.0],[91.5,24.0],[92.5,22.0],[92.0,21.0],[93.5,22.5],[94.5,27.5],[97.5,28.5],[97.0,27.0],[97.0,25.0],[95.5,22.0],[94.5,22.5],[93.5,24.0],[91.5,24.0],[90.0,26.0],[89.5,26.5],[88.0,26.5],[87.5,27.5],[85.0,27.5],[83.5,28.0],[81.0,28.5],[79.5,28.5],[78.5,31.5],[76.5,31.5],[74.5,31.5],[73.5,31.5],[72.0,30.0],[70.5,28.5],[70.0,27.5],[69.5,26.0],[69.0,24.5],[68.0,23.5]],
+  // Middle East / Arabia
+  [[68.0,24.0],[67.0,24.5],[66.5,25.0],[62.0,25.0],[60.5,24.5],[57.5,23.5],[57.0,22.5],[55.5,22.0],[55.0,22.5],[56.5,24.5],[56.0,25.0],[53.5,24.0],[51.5,24.5],[51.0,23.5],[49.5,18.5],[45.5,12.5],[43.5,12.5],[43.1,11.5],[41.7,12.5],[42.0,14.0],[44.9,11.5],[51.0,11.5],[55.0,12.5],[60.0,22.5],[62.0,25.0],[66.0,25.0],[68.0,24.0]],
+  // East Asia coast
+  [[108.0,22.0],[110.0,21.5],[112.0,22.0],[114.0,22.0],[114.5,22.5],[117.0,23.0],[119.0,25.0],[120.0,29.5],[121.5,31.5],[121.5,32.0],[120.0,33.0],[119.5,34.5],[120.5,37.5],[120.0,38.5],[121.0,39.5],[121.5,40.5],[122.5,40.5],[123.5,40.5],[124.5,40.0],[125.0,40.5],[126.0,40.0],[126.5,38.5],[127.5,38.5],[128.0,38.5],[129.0,37.5],[129.5,36.5],[129.5,35.5],[128.5,35.0],[127.5,34.5],[126.5,34.5],[126.0,35.0],[126.5,37.0],[126.5,38.5],[125.0,40.0],[124.0,40.0],[123.5,41.0],[122.5,40.5],[120.5,40.5],[119.5,40.0],[119.0,39.5],[119.5,36.5],[118.0,36.0],[117.5,36.5],[117.0,39.0],[116.5,40.5],[115.0,40.5],[112.0,40.5],[111.0,40.0],[110.5,41.5],[109.0,42.0],[107.5,42.0],[103.0,42.0],[101.0,42.5],[99.5,43.0],[97.5,44.5],[95.5,44.0],[90.5,45.0],[87.5,49.0],[84.5,51.0],[80.5,51.0],[80.0,50.5],[82.0,50.5],[85.0,50.0],[88.0,48.5],[90.0,48.0],[92.5,47.5],[95.5,47.5],[98.0,47.5],[100.5,47.5],[103.0,47.5],[106.0,48.5],[108.5,49.5],[111.5,49.5],[113.5,49.5],[116.5,49.5],[118.0,48.0],[120.5,47.5],[123.5,47.5],[125.0,48.5],[128.0,48.5],[130.5,47.0],[132.0,47.0],[133.0,48.0],[134.5,48.0],[135.5,48.0],[134.0,47.0],[133.0,45.0],[132.0,43.5],[131.5,42.5],[130.5,41.5],[130.0,42.0],[129.5,42.0],[129.0,41.5],[128.0,41.5],[127.0,41.5],[126.0,40.5],[126.0,40.0],[125.5,40.0],[125.0,40.5],[122.5,40.5],[119.5,40.0],[118.5,37.5],[117.5,36.5],[118.0,36.0],[119.5,36.5],[120.0,37.5],[117.0,39.0],[115.0,39.0],[114.0,38.5],[112.5,38.0],[111.5,37.5],[110.5,37.0],[110.0,36.0],[109.5,35.5],[110.0,34.5],[111.5,34.5],[112.0,33.5],[112.0,32.5],[113.0,32.0],[114.0,32.5],[114.5,30.5],[114.0,29.5],[113.0,29.0],[112.0,28.0],[111.0,27.0],[110.5,25.5],[110.0,25.0],[109.0,24.0],[108.0,22.0]],
+  // Southeast Asia
+  [[100.0,5.5],[102.0,5.5],[103.8,1.3],[103.5,1.5],[103.0,1.5],[102.0,3.5],[101.0,4.5],[100.5,5.0],[100.5,5.5],[99.5,6.5],[99.0,8.0],[98.5,9.5],[100.0,5.5]],
+  // Greenland
+  [[-66.0,76.0],[-64.5,77.0],[-64.0,78.0],[-66.0,79.0],[-68.0,80.5],[-60.0,82.5],[-44.0,83.5],[-24.0,83.0],[-18.5,80.0],[-18.0,76.5],[-20.0,74.0],[-24.0,72.0],[-26.0,71.5],[-34.0,74.0],[-43.5,76.0],[-54.0,76.0],[-57.0,74.5],[-55.0,73.0],[-52.5,69.5],[-51.5,67.0],[-53.5,65.5],[-57.5,65.5],[-60.5,66.5],[-64.0,65.5],[-65.0,66.0],[-66.0,68.0],[-68.0,65.0],[-66.0,76.0]],
+  // New Zealand North
+  [[-172.5,-34.5],[-174.5,-36.5],[-175.5,-37.0],[-178.0,-37.5],[-178.5,-39.0],[-177.0,-39.5],[-175.0,-41.5],[-174.0,-41.5],[-174.0,-39.0],[-175.0,-37.0],[-174.5,-36.5],[-172.5,-34.5]],
+  // Japan
+  [[130.5,31.5],[131.5,32.5],[132.5,33.0],[134.0,33.5],[135.0,34.0],[134.5,36.0],[135.5,36.5],[135.5,37.5],[136.5,37.5],[136.5,36.5],[137.5,37.0],[138.5,38.5],[139.5,40.0],[140.5,40.5],[141.5,41.0],[141.5,43.0],[140.5,43.5],[140.0,41.5],[139.5,40.5],[140.0,39.5],[140.0,38.5],[139.5,38.0],[136.5,36.0],[135.5,35.0],[135.0,35.0],[134.0,35.0],[132.0,34.0],[131.5,33.0],[130.5,31.5]],
+];
+// Render embedded land rings immediately — zero network dependency
+const landEdgeMat = new THREE.LineBasicMaterial({color:0x4a9acc,transparent:true,opacity:0.65,depthWrite:false});
+const embeddedLines = []; // track so we can remove them if real data loads
+LAND_RINGS.forEach(ring=>{
+  const pts = ring.map(([lng,lat])=>ll2xyz(lat,lng,GLOB_R*1.002));
+  pts.push(pts[0].clone());
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  const line = new THREE.Line(geo, landEdgeMat);
+  globeGroup.add(line);
+  embeddedLines.push(line);
+});
+
+// Async upgrade: fetch real Natural Earth GeoJSON country borders
+// When loaded, remove coarse rings and replace with accurate outlines
+(async()=>{
+  const urls = [
+    'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json',
+    'https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson'
+  ];
+  
+  for(const url of urls){
+    try{
+      const r = await fetch(url);
+      if(!r.ok) continue;
+      const data = await r.json();
+      
+      let features = [];
+      
+      // Handle TopoJSON (world-atlas)
+      if(data.objects && data.objects.countries){
+        const topo = data;
+        const {scale,translate} = topo.transform;
+        const arcs = topo.arcs;
+        
+        function decodeArc(idx){
+          const rev = idx<0;
+          const arc = arcs[rev?~idx:idx];
+          let x=0,y=0;
+          const pts = arc.map(([dx,dy])=>{x+=dx;y+=dy;
+            return [x*scale[0]+translate[0], y*scale[1]+translate[1]];});
+          return rev ? pts.slice().reverse() : pts;
+        }
+        function decodeRing(ringArcs){
+          let pts=[];
+          ringArcs.forEach(i=>{
+            const ap=decodeArc(i);
+            pts = pts.concat(pts.length ? ap.slice(1) : ap);
+          });
+          return pts;
+        }
+        topo.objects.countries.geometries.forEach(geom=>{
+          const polys = geom.type==='Polygon'?[geom.arcs]:
+                        geom.type==='MultiPolygon'?geom.arcs:[];
+          polys.forEach(poly=>{
+            features.push(poly[0] ? decodeRing(poly[0]) : null);
+          });
+        });
+        features = features.filter(Boolean);
+      }
+      // Handle plain GeoJSON
+      else if(data.features){
+        data.features.forEach(f=>{
+          const geom = f.geometry;
+          if(!geom) return;
+          const polys = geom.type==='Polygon'?[geom.coordinates]:
+                        geom.type==='MultiPolygon'?geom.coordinates:[];
+          polys.forEach(poly=>{ if(poly[0]) features.push(poly[0]); });
+        });
+      }
+      
+      if(features.length < 10) continue; // sanity check
+      
+      // Success — remove coarse rings, draw real borders
+      embeddedLines.forEach(l=>globeGroup.remove(l));
+      const realMat = new THREE.LineBasicMaterial({
+        color:0x4a9acc,transparent:true,opacity:0.65,depthWrite:false});
+      features.forEach(ring=>{
+        if(!ring||ring.length<3) return;
+        const pts = ring.map(([lng,lat])=>ll2xyz(lat,lng,GLOB_R*1.002));
+        pts.push(pts[0].clone());
+        globeGroup.add(new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints(pts), realMat));
+      });
+      break; // stop trying urls
+    } catch(e){ /* try next url */ }
+  }
+})();
+
+
+
+
+
+
+// Atmosphere glow — removed per design (was causing bright edge artifact)
+
+// No lighting needed — MeshBasicMaterial is unlit
+
+// Helper: lat/lng to 3D
+function ll2xyz(lat,lng,r=GLOB_R){
+  const phi=(90-lat)*Math.PI/180;
+  const th=(lng+180)*Math.PI/180;
+  return new THREE.Vector3(
+    -r*Math.sin(phi)*Math.cos(th),
+    r*Math.cos(phi),
+    r*Math.sin(phi)*Math.sin(th)
+  );
+}
+
+// Node color: content density drives brightness (the core story — who produces vs consumes)
+// High content = bright white-blue (sovereign) | Low content = dim deep red (dependent)
+function nodeColor(content, gap){
+  const t = content / 100; // 0–1
+  if(content >= 85){
+    // Sovereign producers — bright cyan-white (US/Europe/Japan/Korea)
+    return new THREE.Color().setRGB(0.7 + t*0.3, 0.85 + t*0.15, 1.0);
+  } else if(content >= 60){
+    // Mid-tier — soft blue-white
+    return new THREE.Color().setRGB(0.4 + t*0.4, 0.6 + t*0.3, 0.9 + t*0.1);
+  } else if(content >= 35){
+    // Dependent but emerging — amber dimming to orange
+    return new THREE.Color().setRGB(0.6 + t*0.3, 0.35 + t*0.2, 0.05);
+  } else {
+    // Low presence — deep dim red (African cities with high usage but near-zero content)
+    return new THREE.Color().setRGB(0.25 + t*0.35, 0.05 + t*0.1, 0.02);
+  }
+}
+
+function nodeSize(content, usage){
+  // Size = content density (not usage) — small = invisible to the internet
+  return 0.18 + (content / 100) * 1.4;
+}
+
+// Plot WCI nodes — all 94 cities
+const wciPoints=[];
+const wciGeo=new THREE.BufferGeometry();
+const wciPos=[],wciColArr=[],wciSzArr=[];
+
+WCI_DATA.forEach(d=>{
+  const pos=ll2xyz(d.lat,d.lng,GLOB_R*1.025);
+  const c=nodeColor(d.content, d.gap);
+  const sz=nodeSize(d.content, d.usage);
+  wciPos.push(pos.x,pos.y,pos.z);
+  wciColArr.push(c.r,c.g,c.b);
+  wciSzArr.push(sz);
+  wciPoints.push({...d,pos3:pos});
+});
+
+wciGeo.setAttribute('position',new THREE.Float32BufferAttribute(wciPos,3));
+wciGeo.setAttribute('color',new THREE.Float32BufferAttribute(wciColArr,3));
+wciGeo.setAttribute('size',new THREE.Float32BufferAttribute(wciSzArr,1));
+
+const wciMat=new THREE.ShaderMaterial({
+  uniforms:{uTime:{value:0}},
+  vertexShader:`
+    attribute float size;
+    attribute vec3 color;
+    varying vec3 vCol;
+    uniform float uTime;
+    void main(){
+      vCol=color;
+      float breathe=0.9+0.1*sin(uTime*1.2+position.x*0.8);
+      vec4 mv=modelViewMatrix*vec4(position,1.);
+      gl_PointSize=size*breathe*(600./-mv.z);
+      gl_Position=projectionMatrix*mv;
+    }`,
+  fragmentShader:`
+    varying vec3 vCol;
+    void main(){
+      vec2 c=2.*gl_PointCoord-1.;float d=length(c);
+      if(d>1.)discard;
+      float g=pow(1.-smoothstep(0.,0.9,d),1.3)+smoothstep(0.2,0.,d)*0.5;
+      gl_FragColor=vec4(vCol,g*(0.9-0.25*d));
+    }`,
+  transparent:true,depthWrite:false,blending:THREE.AdditiveBlending
+});
+const wciMesh=new THREE.Points(wciGeo,wciMat);
+globeGroup.add(wciMesh);
+
+// City labels on globe — Africa + major sovereign hubs
+wciPoints.forEach(d=>{
+  const isAfrica=AFRICA_COUNTRIES.has(d.country);
+  if(!isAfrica&&d.content<80)return;
+  const sp=makeLabel(d.city,d.pos3,isAfrica?0.6:0.8);
+  sp.scale.set(2.2,0.44,1);
+  globeGroup.add(sp);
+});
+
+// Data pipe arcs (geodesic curves between major hubs and African cities)
+// Real submarine cable links — derived from Internet_Cable_Connections column
+// Format: [lat1, lng1, lat2, lng2] — actual cable landing point pairs
+const CABLE_LINKS = [
+  [9.07,7.4,6.52,3.38],[-36.86,174.77,34.05,-118.24],[-36.86,174.77,-33.87,151.21],
+  [52.37,4.9,51.51,-0.13],[52.37,4.9,40.71,-74.01],[37.98,23.73,30.04,31.24],
+  [37.98,23.73,40.42,-3.7],[37.98,23.73,35.17,33.36],[37.98,23.73,1.35,103.82],
+  [39.91,116.39,31.23,121.47],[13.75,100.52,19.08,72.88],[13.75,100.52,30.04,31.24],
+  [13.75,100.52,1.35,103.82],[13.75,100.52,31.23,121.47],[19.08,72.88,30.04,31.24],
+  [19.08,72.88,-6.79,39.21],[19.08,72.88,11.59,43.15],[19.08,72.88,25.2,55.27],
+  [19.08,72.88,43.3,5.4],[19.08,72.88,41.9,12.5],[19.08,72.88,1.35,103.82],
+  [-34.6,-58.38,14.69,-17.44],[-34.6,-58.38,25.77,-80.19],[-34.6,-58.38,-23.55,-46.63],
+  [30.04,31.24,11.59,43.15],[30.04,31.24,25.2,55.27],[30.04,31.24,51.51,-0.13],
+  [30.04,31.24,40.42,-3.7],[30.04,31.24,35.17,33.36],[30.04,31.24,48.86,2.35],
+  [30.04,31.24,41.9,12.5],[30.04,31.24,1.35,103.82],[-33.93,18.42,-6.79,39.21],
+  [-33.93,18.42,38.91,-77.04],[-33.93,18.42,11.59,43.15],[-33.93,18.42,-26.2,28.04],
+  [-33.93,18.42,51.51,-0.13],[-6.79,39.21,11.59,43.15],[-6.79,39.21,-26.2,28.04],
+  [38.91,-77.04,40.42,-3.7],[38.91,-77.04,40.71,-74.01],[11.59,43.15,43.3,5.4],
+  [11.59,43.15,48.86,2.35],[53.33,-6.25,40.71,-74.01],[25.2,55.27,51.51,-0.13],
+  [21.49,39.19,41.9,12.5],[-6.21,106.85,1.35,103.82],[-6.21,106.85,-33.87,151.21],
+  [34.05,-118.24,1.35,103.82],[34.05,-118.24,31.23,121.47],[34.05,-118.24,-33.87,151.21],
+  [34.05,-118.24,35.69,139.69],[-8.84,13.23,-23.55,-46.63],[6.52,3.38,51.51,-0.13],
+  [38.72,-9.14,51.51,-0.13],[38.72,-9.14,40.42,-3.7],[38.72,-9.14,-23.55,-46.63],
+  [51.51,-0.13,40.71,-74.01],[51.51,-0.13,1.35,103.82],[40.42,-3.7,35.17,33.36],
+  [40.42,-3.7,41.9,12.5],[43.3,5.4,48.86,2.35],[25.77,-80.19,-23.55,-46.63],
+  [35.17,33.36,1.35,103.82],[40.71,-74.01,48.86,2.35],[40.71,-74.01,-23.55,-46.63],
+  [48.86,2.35,1.35,103.82],[37.57,126.98,31.23,121.47],[37.57,126.98,35.69,139.69],
+  [37.77,-122.42,35.69,139.69],[1.35,103.82,31.23,121.47],[1.35,103.82,35.69,139.69],
+  [-33.87,151.21,35.69,139.69]
+];
+
+// Determine if a cable endpoint is in the Global North / high-content cluster
+function isHighContent(lat,lng){
+  // North America, Europe, East Asia hub cluster
+  if(lat>35 && lng>-130 && lng<50) return true; // Europe + Russia
+  if(lat>30 && lng>100 && lng<145) return true;  // East Asia
+  if(lat>25 && lng>-130 && lng<-60) return true; // North America
+  if(lat>0 && lng>95 && lng<115) return true;    // Singapore/SE Asia hub
+  return false;
+}
+
+function makeArc(lat1,lng1,lat2,lng2,segs=40){
+  const p1=ll2xyz(lat1,lng1,GLOB_R*1.01);
+  const p2=ll2xyz(lat2,lng2,GLOB_R*1.01);
+  const pts=[];
+  const mid=new THREE.Vector3().addVectors(p1,p2).multiplyScalar(0.5);
+  mid.normalize().multiplyScalar(GLOB_R*1.25); // arc height
+  for(let i=0;i<=segs;i++){
+    const t=i/segs;
+    const a=new THREE.Vector3().lerpVectors(p1,mid,t);
+    const b=new THREE.Vector3().lerpVectors(mid,p2,t);
+    pts.push(new THREE.Vector3().lerpVectors(a,b,t));
+  }
+  const geo=new THREE.BufferGeometry().setFromPoints(pts);
+  // Heavy bright = both endpoints are high-content hubs
+  // Dim = cable connecting Global South to hub (data dependency)
+  const heavy=isHighContent(lat1,lng1)&&isHighContent(lat2,lng2);
+  const col=heavy?0x66aaff:0x3355aa;
+  const mat=new THREE.LineBasicMaterial({color:col,transparent:true,opacity:heavy?0.75:0.4,depthWrite:false});
+  return new THREE.Line(geo,mat);
+}
+
+// Draw all real cable routes
+CABLE_LINKS.forEach(([lat1,lng1,lat2,lng2])=>{
+  globeGroup.add(makeArc(lat1,lng1,lat2,lng2));
+});
+
+// ─── VIEW STATE ───────────────────────────────────────────────────────────────
+let view = 'net'; // 'net' | 'globe'
+let sparkActive=false, sparkNodes=[], sparkTick=0;
+let pulsePool=[{p:new THREE.Vector3(1e4,1e4,1e4),t:-1e4},{p:new THREE.Vector3(1e4,1e4,1e4),t:-1e4},{p:new THREE.Vector3(1e4,1e4,1e4),t:-1e4}];
+let pulseIdx=0;
+
+// Africa stats — AFRICA_COUNTRIES declared at top of globe section above
+const afData=WCI_DATA.filter(d=>AFRICA_COUNTRIES.has(d.country));
+const avgGap=afData.length?afData.reduce((s,d)=>s+d.gap,0)/afData.length:0;
+const avgContent=afData.length?afData.reduce((s,d)=>s+d.content,0)/afData.length:0;
+document.getElementById('stat-gap').textContent=avgGap.toFixed(1);
+document.getElementById('stat-content').textContent=avgContent.toFixed(1);
+
+const INFO_TEXT={
+  net:'33% of world languages are African. Each node is a language community plotted by cultural relatedness — not geography. The dense African core shows ancient interconnection invisible on any map.',
+  globe:'The same communities, seen through the internet\'s eyes. Node size = Content Density. Color = the Latency Gap (Usage − Content). Thick bright arcs are "hot" data pipes between sovereign nodes. Thin grey lines are African cities sending their data outward — and receiving little back.'
+};
+
+function switchView(v){
+  if(v===view)return;
+  view=v;
+  const flash=document.getElementById('flash');
+  flash.classList.add('go');
+  setTimeout(()=>{
+    netGroup.visible=v==='net';
+    globeGroup.visible=v==='globe';
+    document.getElementById('net-legend').classList.toggle('vis',v==='net');
+    document.getElementById('globe-legend').classList.toggle('vis',v==='globe');
+    document.getElementById('stats').classList.toggle('vis',v==='globe');
+    document.getElementById('spark-btn').style.display=v==='net'?'':'none';
+    document.getElementById('info-text').textContent=INFO_TEXT[v];
+    // Reset camera
+    if(v==='globe'){
+      camera.position.set(0,4,26);
+      // Rotate to face Atlantic — Africa visible immediately
+      rotX=0.12; rotY=0.35;
+    } else {
+      camera.position.set(0,0,28);
+      rotX=0;rotY=0;
+    }
+    sparkActive=false;sparkNodes=[];
+    setTimeout(()=>flash.classList.remove('go'),350);
+  },280);
+}
+
+document.querySelectorAll('.vtab').forEach(b=>{
+  b.addEventListener('click',e=>{
+    e.stopPropagation();
+    document.querySelectorAll('.vtab').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    switchView(b.dataset.v);
+  });
+});
+
+// ─── SPARK (neural net view) ───────────────────────────────────────────────────
+const nodeActivation=new Array(LANG_NODES.length).fill(0);
+const nodeLit=new Array(LANG_NODES.length).fill(false);
+
+document.getElementById('spark-btn').addEventListener('click',e=>{
+  e.stopPropagation();
+  nodeActivation.fill(0); nodeLit.fill(false);
+  sparkActive=true; sparkTick=0; sparkNodes=[];
+  // Seed from African language family nodes
+  const seeds=[0,4,7,11]; // yoruba, swahili, zulu, bambara
+  seeds.forEach(i=>{nodeLit[i]=true;nodeActivation[i]=1;sparkNodes.push({i,born:0});});
+  const btn=document.getElementById('spark-btn');
+  btn.classList.add('on');
+  setTimeout(()=>btn.classList.remove('on'),5000);
+});
+
+// Build adjacency for spark
+const langAdj={};
+LANG_EDGES.forEach(([a,b])=>{
+  langAdj[a]=langAdj[a]||[];langAdj[b]=langAdj[b]||[];
+  const ai=LANG_NODES.findIndex(n=>n.id===a),bi=LANG_NODES.findIndex(n=>n.id===b);
+  if(ai>=0&&bi>=0){langAdj[a].push(bi);langAdj[b].push(ai);}
+});
+
+function tickSpark(){
+  if(!sparkActive||view!=='net')return;
+  sparkTick++;
+  if(sparkTick%8===0){
+    const newWave=[];
+    sparkNodes.forEach(({i})=>{
+      const neighbors=langAdj[LANG_NODES[i].id]||[];
+      neighbors.forEach(j=>{
+        if(!nodeLit[j]&&Math.random()<0.2){
+          nodeLit[j]=true;nodeActivation[j]=0.05;
+          newWave.push({i:j,born:sparkTick});
+        }
+      });
+    });
+    sparkNodes.push(...newWave);
+    sparkNodes=sparkNodes.filter(s=>sparkTick-s.born<60);
+    if(sparkNodes.length===0)sparkActive=false;
+  }
+  nodeLit.forEach((lit,i)=>{
+    if(lit)nodeActivation[i]=Math.min(1,nodeActivation[i]+0.03);
+  });
+  // Update color buffer
+  const cols=nodeGeo.attributes.color.array;
+  LANG_NODES.forEach((n,i)=>{
+    const base=familyColors[n.family]||familyColors['default'];
+    const a=nodeActivation[i];
+    const lit=new THREE.Color(1,1,1);
+    const c=base.clone().lerp(lit,a*0.7);
+    cols[i*3]=c.r;cols[i*3+1]=c.g;cols[i*3+2]=c.b;
+  });
+  nodeGeo.attributes.color.needsUpdate=true;
+}
+
+// ─── TOOLTIP (globe) ──────────────────────────────────────────────────────────
+const tip=document.getElementById('tip');
+const raycaster=new THREE.Raycaster();
+raycaster.params.Points.threshold=0.5;
+const ptr=new THREE.Vector2();
+
+function showTip(d,x,y){
+  document.getElementById('tip-city').textContent=`${d.city}, ${d.country}`;
+  document.getElementById('tf-usage').style.width=d.usage+'%';
+  document.getElementById('tv-usage').textContent=d.usage;
+  document.getElementById('tf-content').style.width=d.content+'%';
+  document.getElementById('tv-content').textContent=d.content;
+  const gapAbs=Math.abs(d.gap);
+  document.getElementById('tf-gap').style.width=Math.min(gapAbs,100)+'%';
+  document.getElementById('tf-gap').style.background=d.gap>0?'#D85A30':'#1D9E75';
+  document.getElementById('tv-gap').textContent=(d.gap>0?'+':'')+d.gap;
+  tip.style.left=(x+14)+'px'; tip.style.top=(y-14)+'px';
+  tip.style.display='block';
+}
+
+canvas3d.addEventListener('mousemove',e=>{
+  if(view!=='globe'){tip.style.display='none';return;}
+  ptr.x=(e.clientX/W())*2-1;
+  ptr.y=-(e.clientY/H())*2+1;
+  raycaster.setFromCamera(ptr,camera);
+  const hits=raycaster.intersectObject(wciMesh);
+  if(hits.length){
+    const d=wciPoints[hits[0].index];
+    if(d)showTip(d,e.clientX,e.clientY);
+  } else {
+    tip.style.display='none';
+  }
+});
+canvas3d.addEventListener('mouseleave',()=>tip.style.display='none');
+
+// ─── CRACKLE ON LEGEND CLICK ─────────────────────────────────────────────────
+// Build edge type adjacency map
+const edgesByType={bantu:[],trade:[],diaspora:[],distant:[]};
+LANG_EDGES.forEach(([a,b,type])=>{
+  const ai=LANG_NODES.findIndex(n=>n.id===a),bi=LANG_NODES.findIndex(n=>n.id===b);
+  if(ai>=0&&bi>=0&&edgesByType[type]) edgesByType[type].push([ai,bi]);
+});
+
+// Store original edge colors for restoration
+const origEdgeColors=new Float32Array(edgeGeo.attributes.color.array);
+
+function crackleEdgeType(type){
+  // Flash the crackle uniform on nodes
+  nodeMat.uniforms.uCrackle.value=1.0;
+
+  // Brighten matching edge segments, dim others
+  const cols=edgeGeo.attributes.color.array;
+  const typeEdges=new Set();
+  edgesByType[type].forEach(([ai,bi])=>{
+    // Find which vertex pairs in the geometry correspond to these nodes
+    typeEdges.add(`${Math.min(ai,bi)}-${Math.max(ai,bi)}`);
+  });
+
+  // Rebuild edge colors — bright for matching type, very dim for others
+  const edgeColors={bantu:new THREE.Color(0x7F77DD),trade:new THREE.Color(0x1D9E75),
+    diaspora:new THREE.Color(0xD85A30),distant:new THREE.Color(0x333355)};
+  const edgeWidths={bantu:1.0,trade:0.8,diaspora:0.75,distant:0.25};
+  let vi=0;
+  LANG_EDGES.forEach(([a,b,t,w])=>{
+    const na=nodeMap[a],nb=nodeMap[b];
+    if(!na||!nb){vi+=2;return;}
+    const isMatch=(t===type);
+    const c=edgeColors[t]||new THREE.Color(0x333333);
+    const alpha=isMatch?Math.min(1,edgeWidths[t]*w*3.5):0.04;
+    cols[vi*3]=c.r*alpha;cols[vi*3+1]=c.g*alpha;cols[vi*3+2]=c.b*alpha;
+    cols[(vi+1)*3]=c.r*alpha;cols[(vi+1)*3+1]=c.g*alpha;cols[(vi+1)*3+2]=c.b*alpha;
+    vi+=2;
+  });
+  edgeGeo.attributes.color.needsUpdate=true;
+
+  // Light up nodes connected by this type
+  nodeActivation.fill(0); nodeLit.fill(false);
+  edgesByType[type].forEach(([ai,bi])=>{
+    nodeLit[ai]=true; nodeActivation[ai]=0.8;
+    nodeLit[bi]=true; nodeActivation[bi]=0.8;
+  });
+
+  // Restore after 2.5s
+  const btn=document.querySelector(`.nl-row[data-edge="${type}"]`);
+  if(btn) btn.classList.add('active-crackle');
+  setTimeout(()=>{
+    edgeGeo.attributes.color.array.set(origEdgeColors);
+    edgeGeo.attributes.color.needsUpdate=true;
+    nodeActivation.fill(0); nodeLit.fill(false);
+    if(btn) btn.classList.remove('active-crackle');
+  },2500);
+}
+
+document.querySelectorAll('.nl-row.clickable').forEach(row=>{
+  row.addEventListener('click',e=>{
+    e.stopPropagation();
+    crackleEdgeType(row.dataset.edge);
+  });
+});
+
+// ─── RESIZE ───────────────────────────────────────────────────────────────────
+window.addEventListener('resize',()=>{
+  renderer.setSize(W(),H());
+  camera.aspect=W()/H();
+  camera.updateProjectionMatrix();
+});
+
+// ─── ANIMATE ─────────────────────────────────────────────────────────────────
+const clock=new THREE.Clock();
+let frame=0;
+
+function animate(){
+  requestAnimationFrame(animate);
+  const t=clock.getElapsedTime();
+  frame++;
+
+  // Physics
+  if(!isDragging){
+    if(view==='globe') rotY+=autoRotY;
+    else rotY+=autoRotY*0.5;
+  }
+  rotY+=rotVY; rotX+=rotVX;
+  rotVY*=0.92; rotVX*=0.92;
+  rotX=Math.max(-1.0,Math.min(1.0,rotX));
+
+  netGroup.rotation.x=rotX; netGroup.rotation.y=rotY;
+  globeGroup.rotation.x=rotX; globeGroup.rotation.y=rotY;
+  starField.rotation.y+=0.00015;
+
+  // Update uniforms
+  if(nodeMat.uniforms){
+    nodeMat.uniforms.uTime.value=t;
+    // Decay crackle over time
+    if(nodeMat.uniforms.uCrackle.value>0)
+      nodeMat.uniforms.uCrackle.value=Math.max(0,nodeMat.uniforms.uCrackle.value-0.008);
+  }
+  if(wciMat.uniforms) wciMat.uniforms.uTime.value=t;
+
+  // Spark
+  if(frame%2===0) tickSpark();
+
+  renderer.render(scene,camera);
+}
+animate();
+</script>
+</body>
+</html>
