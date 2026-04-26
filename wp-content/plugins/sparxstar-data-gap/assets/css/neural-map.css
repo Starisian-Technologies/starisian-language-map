@@ -31,7 +31,7 @@
 #spx-neural-map {
 	display: block;
 	width: 100%;
-	height: 600px;
+	height: var( --spx-map-height, 600px );
 	cursor: grab;
 }
 
