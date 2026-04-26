@@ -303,11 +303,8 @@
 		} );
 
 		// ── Groups for rotation ───────────────────────────────────────────────
-		var earthGroup = new THREE.Group();
-		scene.children.slice( 2 ).forEach( function ( obj ) {
-			// Stars stay fixed; move everything else into the earth group
-		} );
-		// Simpler: rotate scene root or a pivot group
+		// Move all non-light objects into a pivot group so the entire globe
+		// (land rings, nodes, arcs) rotates together while lights stay fixed.
 		var pivot = new THREE.Group();
 		scene.children.slice().forEach( function ( obj ) {
 			if ( obj.type !== 'AmbientLight' && obj.type !== 'DirectionalLight' ) {

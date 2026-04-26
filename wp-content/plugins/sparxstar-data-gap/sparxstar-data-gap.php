@@ -219,7 +219,6 @@ function spx_data_gap_legend_html(): string {
  */
 function spx_data_gap_activate(): void {
 	// Future: create any required DB tables here.
-	flush_rewrite_rules();
 }
 register_activation_hook( __FILE__, __NAMESPACE__ . '\\spx_data_gap_activate' );
 
@@ -229,6 +228,6 @@ register_activation_hook( __FILE__, __NAMESPACE__ . '\\spx_data_gap_activate' );
  * @return void
  */
 function spx_data_gap_deactivate(): void {
-	flush_rewrite_rules();
+	// Future: clean up any plugin data here.
 }
 register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\spx_data_gap_deactivate' );

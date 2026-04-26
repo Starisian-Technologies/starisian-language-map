@@ -11,7 +11,7 @@ The `@font-face` declaration in `assets/css/neural-map.css` references both
 files.  If only the `.woff2` variant is available the `.woff` line may be
 removed from the stylesheet; modern browsers (2018+) support WOFF2.
 
-## Licence reminder
+## License reminder
 
 Ensure your licence for the Dune Rise typeface permits self-hosting and web
 embedding before placing the files here.  The CSS `font-display: swap`
