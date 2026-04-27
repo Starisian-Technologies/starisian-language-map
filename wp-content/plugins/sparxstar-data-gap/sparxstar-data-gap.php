@@ -59,12 +59,12 @@ function spx_data_gap_register_assets(): void {
 	$js_suffix  = ( ! $script_debug && file_exists( $js_min_path )  ) ? '.min' : '';
 	$css_suffix = ( ! $script_debug && file_exists( $css_min_path ) ) ? '.min' : '';
 
-	// Three.js r128 — self-hosted, no external CDN.
+	// Three.js r0.184 — self-hosted bundle generated via `npm run vendor:three`.
 	wp_register_script(
 		'spx-three-js',
 		SPX_DATA_GAP_URL . 'assets/js/three.min.js',
 		[],
-		'128',
+		'0.184.0',
 		true   // Load in footer.
 	);
 

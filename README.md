@@ -97,7 +97,7 @@ wp-content/plugins/sparxstar-data-gap/
 ├── sparxstar-data-gap.php          # Plugin entry — shortcode + asset enqueue
 ├── assets/
 │   ├── js/
-│   │   ├── three.min.js            # Three.js r128 (self-hosted, MIT)
+│   │   ├── three.min.js            # Three.js r0.184 (self-hosted, MIT)
 │   │   ├── neural-map.js           # Visualization source
 │   │   └── neural-map.min.js       # Minified (generated — not committed)
 │   ├── css/

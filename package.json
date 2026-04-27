@@ -6,12 +6,15 @@
   "scripts": {
     "build": "npm run build:js && npm run build:css",
     "build:js": "terser wp-content/plugins/sparxstar-data-gap/assets/js/neural-map.js --compress --mangle --output wp-content/plugins/sparxstar-data-gap/assets/js/neural-map.min.js",
-    "build:css": "postcss wp-content/plugins/sparxstar-data-gap/assets/css/neural-map.css --use cssnano --no-map --output wp-content/plugins/sparxstar-data-gap/assets/css/neural-map.min.css"
+    "build:css": "postcss wp-content/plugins/sparxstar-data-gap/assets/css/neural-map.css --use cssnano --no-map --output wp-content/plugins/sparxstar-data-gap/assets/css/neural-map.min.css",
+    "vendor:three": "esbuild scripts/three-entry.js --bundle --format=iife --platform=browser --minify --outfile=wp-content/plugins/sparxstar-data-gap/assets/js/three.min.js"
   },
   "devDependencies": {
     "cssnano": "^7.0.7",
+    "esbuild": "^0.25.4",
     "postcss": "^8.5.3",
     "postcss-cli": "^11.0.1",
-    "terser": "^5.39.0"
+    "terser": "^5.39.0",
+    "three": "^0.184.0"
   }
 }
