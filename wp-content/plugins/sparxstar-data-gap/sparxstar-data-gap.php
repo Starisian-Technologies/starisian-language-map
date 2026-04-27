@@ -168,18 +168,18 @@ function spx_data_gap_shortcode( $atts ): string {
 	ob_start();
 	?>
 	<div class="spx-neural-map-wrap">
-		<p class="spx-neural-map-heading" aria-hidden="true">
+		<p id="<?php echo esc_attr( $container_id . '-heading' ); ?>" class="spx-neural-map-heading">
 			<?php echo esc_html( $heading ); ?>
 		</p>
-		<p class="spx-neural-map-subtitle" aria-hidden="true">
+		<p id="<?php echo esc_attr( $container_id . '-subtitle' ); ?>" class="spx-neural-map-subtitle">
 			<?php esc_html_e( 'Interactive · Drag to rotate · Click a node', 'sparxstar-data-gap' ); ?>
 		</p>
 
 		<div
 			id="<?php echo esc_attr( $container_id ); ?>"
 			class="spx-neural-map-canvas"
-			role="img"
-			aria-label="<?php echo esc_attr( $heading ); ?>"
+			aria-labelledby="<?php echo esc_attr( $container_id . '-heading' ); ?>"
+			aria-describedby="<?php echo esc_attr( $container_id . '-subtitle' ); ?>"
 			data-tooltip-id="<?php echo esc_attr( $tooltip_id ); ?>"
 			style="--spx-map-height:<?php echo $height_style; ?>"
 		></div>
