@@ -38,6 +38,10 @@ jobs:
           sed -i "s/define( 'SPX_DATA_GAP_VERSION', '[^']*' );/define( 'SPX_DATA_GAP_VERSION', '${{ steps.version.outputs.version }}' );/" \
             wp-content/plugins/sparxstar-data-gap/sparxstar-data-gap.php
 
+      - name: Update README stable tag
+        run: |
+          sed -i "s/^Stable tag: .*/Stable tag: ${{ steps.version.outputs.version }}/" \
+            wp-content/plugins/sparxstar-data-gap/README.md
       - name: Update JS @version
         run: |
           sed -i "s/@version [0-9][0-9.]*/@version ${{ steps.version.outputs.version }}/" \
