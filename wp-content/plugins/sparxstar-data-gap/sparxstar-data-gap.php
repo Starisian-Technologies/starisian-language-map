@@ -43,6 +43,23 @@ if ( ! defined( 'SPX_DATA_GAP_VERSION' ) ) {
 	define( 'SPX_DATA_GAP_VERSION', '1.0.0' );
 }
 
+// ── i18n ──────────────────────────────────────────────────────────────────────
+
+/**
+ * Load the plugin text domain so that translations in /languages are picked up
+ * on installs that are not using translate.wordpress.org auto-loading.
+ *
+ * @return void
+ */
+function spx_data_gap_load_textdomain(): void {
+	load_plugin_textdomain(
+		'sparxstar-data-gap',
+		false,
+		dirname( plugin_basename( __FILE__ ) ) . '/languages'
+	);
+}
+add_action( 'init', __NAMESPACE__ . '\\spx_data_gap_load_textdomain' );
+
 // ── Asset registration ────────────────────────────────────────────────────────
 
 /**
