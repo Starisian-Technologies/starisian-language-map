@@ -78,7 +78,6 @@ jobs:
             --exclude='package.json' \
             --exclude='package-lock.json' \
             --exclude='.github' \
-            --exclude='README.md' \
             wp-content/plugins/sparxstar-data-gap/ \
             "$PLUGIN_DIR/"
 
