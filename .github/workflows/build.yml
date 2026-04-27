@@ -32,10 +32,10 @@ jobs:
 
       - name: Verify build artefacts exist
         run: |
-          test -f wp-content/plugins/sparxstar-data-gap/assets/js/neural-map.min.js \
-            && echo "✓ neural-map.min.js"
-          test -f wp-content/plugins/sparxstar-data-gap/assets/css/neural-map.min.css \
-            && echo "✓ neural-map.min.css"
+          test -f wp-content/plugins/sparxstar-data-gap/assets/js/neural-map.min.js
+          echo "✓ neural-map.min.js"
+          test -f wp-content/plugins/sparxstar-data-gap/assets/css/neural-map.min.css
+          echo "✓ neural-map.min.css"
 
       - name: PHP lint
         run: php -l wp-content/plugins/sparxstar-data-gap/sparxstar-data-gap.php
