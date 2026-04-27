@@ -181,7 +181,8 @@
 
 		// ── WebGL availability check ─────────────────────────────────────────
 		if ( ! window.WebGLRenderingContext ) {
-			container.innerHTML = '<p class="spx-neural-map-no-webgl">WebGL is not supported by your browser.</p>';
+			container.removeAttribute( 'role' );
+			container.innerHTML = '<p role="status" class="spx-neural-map-no-webgl">WebGL is not supported by your browser.</p>';
 			return;
 		}
 
@@ -194,7 +195,8 @@
 		try {
 			renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
 		} catch ( e ) {
-			container.innerHTML = '<p class="spx-neural-map-no-webgl">WebGL could not be initialised on this device.</p>';
+			container.removeAttribute( 'role' );
+			container.innerHTML = '<p role="status" class="spx-neural-map-no-webgl">WebGL could not be initialised on this device.</p>';
 			return;
 		}
 		renderer.setPixelRatio( pixelRatio );
@@ -496,6 +498,10 @@
 	// shortcode is below the fold.
 	function bootAll() {
 		var containers = document.querySelectorAll( '.spx-neural-map-canvas' );
+
+		if ( containers.length === 0 ) {
+			return;
+		}
 
 		// Fall back to eager init when IntersectionObserver is unavailable
 		// (e.g. very old Android WebView).

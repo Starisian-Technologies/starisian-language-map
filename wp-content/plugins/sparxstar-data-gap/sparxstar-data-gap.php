@@ -123,6 +123,12 @@ add_action( 'wp_enqueue_scripts', __NAMESPACE__ . '\\spx_data_gap_register_asset
  * @return string                           HTML output.
  */
 function spx_data_gap_shortcode( $atts ): string {
+	// Ensure assets are registered even when the shortcode runs before the
+	// wp_enqueue_scripts hook fires (e.g. theme calling do_shortcode() early,
+	// page-builder preview contexts).  wp_register_script/style are idempotent
+	// so calling this a second time after the hook is a no-op.
+	spx_data_gap_register_assets();
+
 	// Enqueue assets — safe to call multiple times; WP deduplicates.
 	wp_enqueue_style( 'spx-neural-map' );
 	wp_enqueue_script( 'spx-neural-map' );
