@@ -494,15 +494,22 @@
 			return;
 		}
 
+		var remaining = containers.length;
 		var observer = new IntersectionObserver(
 			function ( entries ) {
 				entries.forEach( function ( entry ) {
 					if ( ! entry.isIntersecting ) {
 						return;
 					}
+
 					// Stop observing this element and initialise the map.
 					observer.unobserve( entry.target );
 					init( entry.target );
+					remaining--;
+
+					if ( remaining === 0 ) {
+						observer.disconnect();
+					}
 				} );
 			},
 			{ threshold: 0.1 }   // trigger when 10 % of the canvas is visible
