@@ -450,6 +450,21 @@
 			if ( onResizeFallback ) {
 				window.removeEventListener( 'resize', onResizeFallback );
 			}
+			// Dispose all geometries and materials in the scene graph to free GPU
+			// memory.  This is critical when maps are created/destroyed repeatedly
+			// (SPA navigation, page builders) and prevents WebGL context exhaustion.
+			scene.traverse( function ( obj ) {
+				if ( obj.geometry ) {
+					obj.geometry.dispose();
+				}
+				if ( obj.material ) {
+					if ( Array.isArray( obj.material ) ) {
+						obj.material.forEach( function ( mat ) { mat.dispose(); } );
+					} else {
+						obj.material.dispose();
+					}
+				}
+			} );
 			renderer.dispose();
 			if ( renderer.domElement.parentNode ) {
 				renderer.domElement.parentNode.removeChild( renderer.domElement );
