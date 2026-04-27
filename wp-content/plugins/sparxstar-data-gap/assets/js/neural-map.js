@@ -321,18 +321,21 @@
 
 		// ── Pointer drag interaction (unified mouse + touch + stylus) ────────
 		var isDragging    = false;
+		var didDrag       = false;   // set on any pointermove while dragging; cleared on pointerdown
 		var prevMouseX    = 0;
 		var prevMouseY    = 0;
 		var rotationSpeed = { x: 0, y: 0.0015 };
 
 		function onPointerDown( e ) {
 			isDragging = true;
+			didDrag    = false;
 			prevMouseX = e.clientX;
 			prevMouseY = e.clientY;
 			renderer.domElement.setPointerCapture( e.pointerId );
 		}
 		function onPointerMove( e ) {
 			if ( ! isDragging ) { return; }
+			didDrag = true;
 			var dx = ( e.clientX - prevMouseX ) * 0.005;
 			var dy = ( e.clientY - prevMouseY ) * 0.005;
 			pivot.rotation.y += dx;
@@ -367,6 +370,8 @@
 		} );
 
 		function onTooltipClick( e ) {
+			// Suppress tooltip when the pointer interaction was a drag, not a tap/click.
+			if ( didDrag ) { return; }
 			var rect = renderer.domElement.getBoundingClientRect();
 			mouse.x  = ( ( e.clientX - rect.left ) / rect.width  ) * 2 - 1;
 			mouse.y  = -( ( e.clientY - rect.top  ) / rect.height ) * 2 + 1;
