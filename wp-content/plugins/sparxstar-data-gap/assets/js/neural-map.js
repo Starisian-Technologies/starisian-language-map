@@ -329,6 +329,7 @@
 		var rotationSpeed = { x: 0, y: 0.0015 };
 
 		function onPointerDown( e ) {
+			e.preventDefault();
 			isDragging = true;
 			didDrag    = false;
 			prevMouseX = e.clientX;
@@ -355,7 +356,7 @@
 			}
 		}
 
-		renderer.domElement.addEventListener( 'pointerdown', onPointerDown );   // not passive — needs setPointerCapture
+		renderer.domElement.addEventListener( 'pointerdown', onPointerDown, { passive: false } );
 		renderer.domElement.addEventListener( 'pointermove', onPointerMove, { passive: true } );
 		renderer.domElement.addEventListener( 'pointerup',   onPointerUp,   { passive: true } );
 		renderer.domElement.addEventListener( 'pointercancel', onPointerUp, { passive: true } );
