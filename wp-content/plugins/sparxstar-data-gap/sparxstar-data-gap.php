@@ -58,7 +58,7 @@ function spx_data_gap_load_textdomain(): void {
 		dirname( plugin_basename( __FILE__ ) ) . '/languages'
 	);
 }
-add_action( 'init', __NAMESPACE__ . '\\spx_data_gap_load_textdomain' );
+add_action( 'plugins_loaded', __NAMESPACE__ . '\\spx_data_gap_load_textdomain' );
 
 // ── Asset registration ────────────────────────────────────────────────────────
 
