@@ -146,9 +146,11 @@ function spx_data_gap_shortcode( $atts ): string {
 	$height  = absint( $atts['height'] );
 	$heading = sanitize_text_field( $atts['heading'] );
 
-	// Guard: default height if absint produced 0.
-	if ( $height < 200 ) {
+	// Default height if absint() produced 0; otherwise clamp to the minimum.
+	if ( 0 === $height ) {
 		$height = 600;
+	} elseif ( $height < 200 ) {
+		$height = 200;
 	}
 
 	// Generate unique IDs so multiple shortcode instances can coexist on one
