@@ -141,7 +141,7 @@ function spx_data_gap_shortcode( $atts ): string {
 
 	ob_start();
 	?>
-	<div class="spx-neural-map-wrap" style="--spx-map-height:<?php echo $height_style; ?>">
+	<div class="spx-neural-map-wrap">
 		<p class="spx-neural-map-heading" aria-hidden="true">
 			<?php echo esc_html( $heading ); ?>
 		</p>
@@ -155,6 +155,7 @@ function spx_data_gap_shortcode( $atts ): string {
 			role="img"
 			aria-label="<?php echo esc_attr( $heading ); ?>"
 			data-tooltip-id="<?php echo esc_attr( $tooltip_id ); ?>"
+			style="--spx-map-height:<?php echo $height_style; ?>"
 		></div>
 
 		<div id="<?php echo esc_attr( $tooltip_id ); ?>" class="spx-neural-map-tooltip" role="tooltip" aria-live="polite"></div>

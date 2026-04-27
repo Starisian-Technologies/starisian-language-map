@@ -140,7 +140,7 @@
 /* ── Responsive adjustments ──────────────────────────────────────────────── */
 @media ( max-width: 600px ) {
 	.spx-neural-map-canvas {
-		height: 380px;
+		height: min( var( --spx-map-height, 600px ), 380px );
 	}
 	.spx-neural-map-legend {
 		display: none;
