@@ -182,7 +182,7 @@
 		// ── WebGL availability check ─────────────────────────────────────────
 		if ( ! window.WebGLRenderingContext ) {
 			container.removeAttribute( 'role' );
-			container.innerHTML = '<p role="status" class="spx-neural-map-no-webgl">WebGL is not supported by your browser.</p>';
+			container.innerHTML = '<p role="status" aria-live="polite" aria-atomic="true" class="spx-neural-map-no-webgl">WebGL is not supported by your browser.</p>';
 			return;
 		}
 
@@ -196,7 +196,7 @@
 			renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
 		} catch ( e ) {
 			container.removeAttribute( 'role' );
-			container.innerHTML = '<p role="status" class="spx-neural-map-no-webgl">WebGL could not be initialised on this device.</p>';
+			container.innerHTML = '<p role="status" aria-live="polite" aria-atomic="true" class="spx-neural-map-no-webgl">WebGL could not be initialised on this device.</p>';
 			return;
 		}
 		renderer.setPixelRatio( pixelRatio );
