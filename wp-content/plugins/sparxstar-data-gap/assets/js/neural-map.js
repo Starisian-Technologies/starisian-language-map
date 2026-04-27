@@ -359,6 +359,12 @@
 		var raycaster = new THREE.Raycaster();
 		var mouse     = new THREE.Vector2();
 		var tooltip   = document.getElementById( container.getAttribute( 'data-tooltip-id' ) || '' );
+		var dotMeshes = nodeObjects.map( function ( n ) { return n.dot; } );
+		var dotMeshToFamilyIndex = new WeakMap();
+
+		dotMeshes.forEach( function ( dotMesh, index ) {
+			dotMeshToFamilyIndex.set( dotMesh, index );
+		} );
 
 		function onTooltipClick( e ) {
 			var rect = renderer.domElement.getBoundingClientRect();
@@ -366,16 +372,17 @@
 			mouse.y  = -( ( e.clientY - rect.top  ) / rect.height ) * 2 + 1;
 			raycaster.setFromCamera( mouse, camera );
 
-			var dotMeshes = nodeObjects.map( function ( n ) { return n.dot; } );
-			var hits      = raycaster.intersectObjects( dotMeshes );
+			var hits = raycaster.intersectObjects( dotMeshes );
 			if ( hits.length > 0 ) {
-				var idx = dotMeshes.indexOf( hits[ 0 ].object );
-				var fam = LANGUAGE_FAMILIES[ idx ];
-				if ( fam ) {
-					tooltip.textContent = fam.name + ' — ~' + fam.speakers + 'M speakers';
-					tooltip.style.display  = 'block';
-					tooltip.style.left     = e.clientX + 'px';
-					tooltip.style.top      = ( e.clientY - 36 ) + 'px';
+				var idx = dotMeshToFamilyIndex.get( hits[ 0 ].object );
+				if ( 'number' === typeof idx ) {
+					var fam = LANGUAGE_FAMILIES[ idx ];
+					if ( fam ) {
+						tooltip.textContent = fam.name + ' — ~' + fam.speakers + 'M speakers';
+						tooltip.style.display  = 'block';
+						tooltip.style.left     = e.clientX + 'px';
+						tooltip.style.top      = ( e.clientY - 36 ) + 'px';
+					}
 				}
 			} else {
 				tooltip.style.display = 'none';
