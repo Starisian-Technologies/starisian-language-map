@@ -190,7 +190,13 @@
 		var H = container.clientHeight || 600;
 		var pixelRatio = Math.min( window.devicePixelRatio || 1, 2 );
 
-		var renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
+		var renderer;
+		try {
+			renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
+		} catch ( e ) {
+			container.innerHTML = '<p class="spx-neural-map-no-webgl">WebGL could not be initialised on this device.</p>';
+			return;
+		}
 		renderer.setPixelRatio( pixelRatio );
 		renderer.setSize( W, H );
 		renderer.setClearColor( 0x000000, 1 );

@@ -29,13 +29,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 // ── Constants ────────────────────────────────────────────────────────────────
 
 /** Absolute path to the plugin root directory, with trailing slash. */
-define( 'SPX_DATA_GAP_DIR', plugin_dir_path( __FILE__ ) );
+if ( ! defined( 'SPX_DATA_GAP_DIR' ) ) {
+	define( 'SPX_DATA_GAP_DIR', plugin_dir_path( __FILE__ ) );
+}
 
 /** Public URL to the plugin root, with trailing slash. */
-define( 'SPX_DATA_GAP_URL', plugin_dir_url( __FILE__ ) );
+if ( ! defined( 'SPX_DATA_GAP_URL' ) ) {
+	define( 'SPX_DATA_GAP_URL', plugin_dir_url( __FILE__ ) );
+}
 
 /** Plugin version — bump on every release to bust asset caches. */
-define( 'SPX_DATA_GAP_VERSION', '1.0.0' );
+if ( ! defined( 'SPX_DATA_GAP_VERSION' ) ) {
+	define( 'SPX_DATA_GAP_VERSION', '1.0.0' );
+}
 
 // ── Asset registration ────────────────────────────────────────────────────────
 

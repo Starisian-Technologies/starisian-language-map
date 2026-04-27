@@ -45,6 +45,23 @@
 	height: 100% !important;
 }
 
+/* ── No-WebGL fallback message ───────────────────────────────────────────── */
+.spx-neural-map-no-webgl {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: var( --spx-map-height, 600px );
+	margin: 0;
+	padding: 2rem;
+	box-sizing: border-box;
+	color: #7ab3ff;
+	font-family: 'DuneRise', 'Segoe UI', Tahoma, sans-serif;
+	font-size: clamp( 0.875rem, 2vw, 1.125rem );
+	text-align: center;
+	letter-spacing: 0.1em;
+}
+
 /* ── Heading overlay ─────────────────────────────────────────────────────── */
 .spx-neural-map-heading {
 	position: absolute;
