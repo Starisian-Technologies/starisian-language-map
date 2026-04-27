@@ -49,7 +49,15 @@ define( 'SPX_DATA_GAP_VERSION', '1.0.0' );
  */
 function spx_data_gap_register_assets(): void {
 	$script_debug = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG;
-	$suffix       = $script_debug ? '' : '.min';
+
+	// Prefer unminified assets when SCRIPT_DEBUG is on.  When SCRIPT_DEBUG is
+	// off, load the .min. variant only if the build has been run; otherwise fall
+	// back to the source file so the plugin works in a fresh checkout too.
+	$js_min_path  = SPX_DATA_GAP_DIR . 'assets/js/neural-map.min.js';
+	$css_min_path = SPX_DATA_GAP_DIR . 'assets/css/neural-map.min.css';
+
+	$js_suffix  = ( ! $script_debug && file_exists( $js_min_path )  ) ? '.min' : '';
+	$css_suffix = ( ! $script_debug && file_exists( $css_min_path ) ) ? '.min' : '';
 
 	// Three.js r128 — self-hosted, no external CDN.
 	wp_register_script(
@@ -63,7 +71,7 @@ function spx_data_gap_register_assets(): void {
 	// Neural map visualization — depends on Three.js.
 	wp_register_script(
 		'spx-neural-map',
-		SPX_DATA_GAP_URL . "assets/js/neural-map{$suffix}.js",
+		SPX_DATA_GAP_URL . "assets/js/neural-map{$js_suffix}.js",
 		[ 'spx-three-js' ],
 		SPX_DATA_GAP_VERSION,
 		true   // Load in footer.
@@ -72,7 +80,7 @@ function spx_data_gap_register_assets(): void {
 	// Stylesheet.
 	wp_register_style(
 		'spx-neural-map',
-		SPX_DATA_GAP_URL . "assets/css/neural-map{$suffix}.css",
+		SPX_DATA_GAP_URL . "assets/css/neural-map{$css_suffix}.css",
 		[],
 		SPX_DATA_GAP_VERSION
 	);
@@ -117,33 +125,23 @@ function spx_data_gap_shortcode( $atts ): string {
 		$height = 600;
 	}
 
-	// Inline JS settings so the visualisation script can read them without a
-	// second HTTP request.  Use wp_add_inline_script (CSP-safe nonce support).
-	$settings_json = wp_json_encode(
-		[
-			'containerId' => 'spx-neural-map',
-			'height'      => $height,
-		],
-		JSON_UNESCAPED_UNICODE
-	);
-
-	if ( false !== $settings_json ) {
-		wp_add_inline_script(
-			'spx-neural-map',
-			'var SPX_NEURAL_MAP_SETTINGS = ' . $settings_json . ';',
-			'before'
-		);
-	}
+	// Generate unique IDs so multiple shortcode instances can coexist on one
+	// page without duplicate IDs or settings collisions.  Configuration is
+	// passed via data-* attributes on the container element; the JS reads from
+	// those attributes when it initialises each instance.
+	$container_id = wp_unique_id( 'spx-neural-map-' );
+	$tooltip_id   = $container_id . '-tooltip';
 
 	// Build language-family legend entries for accessibility / non-JS users.
 	$legend_items = spx_data_gap_legend_html();
 
-	// Height as inline style for the map container.
+	// Height applied via CSS custom property so the stylesheet (and its
+	// responsive @media rules) can control sizing consistently.
 	$height_style = esc_attr( (string) $height . 'px' );
 
 	ob_start();
 	?>
-	<div class="spx-neural-map-wrap">
+	<div class="spx-neural-map-wrap" style="--spx-map-height:<?php echo $height_style; ?>">
 		<p class="spx-neural-map-heading" aria-hidden="true">
 			<?php echo esc_html( $heading ); ?>
 		</p>
@@ -152,13 +150,14 @@ function spx_data_gap_shortcode( $atts ): string {
 		</p>
 
 		<div
-			id="spx-neural-map"
+			id="<?php echo esc_attr( $container_id ); ?>"
+			class="spx-neural-map-canvas"
 			role="img"
 			aria-label="<?php echo esc_attr( $heading ); ?>"
-			style="height:<?php echo $height_style; ?>"
+			data-tooltip-id="<?php echo esc_attr( $tooltip_id ); ?>"
 		></div>
 
-		<div id="spx-neural-map-tooltip" role="tooltip" aria-live="polite"></div>
+		<div id="<?php echo esc_attr( $tooltip_id ); ?>" class="spx-neural-map-tooltip" role="tooltip" aria-live="polite"></div>
 
 		<div class="spx-neural-map-legend" aria-label="<?php esc_attr_e( 'Language family legend', 'sparxstar-data-gap' ); ?>">
 			<?php echo $legend_items; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside helper. ?>
@@ -185,16 +184,26 @@ add_shortcode( 'sparxstar_data_gap', __NAMESPACE__ . '\\spx_data_gap_shortcode' 
  */
 function spx_data_gap_legend_html(): string {
 	$families = [
-		[ 'Indo-European',     '#4488ff' ],
-		[ 'Sino-Tibetan',      '#ff8844' ],
-		[ 'Niger-Congo',       '#44ff88' ],
-		[ 'Afro-Asiatic',      '#ffcc44' ],
-		[ 'Austronesian',      '#ff44cc' ],
-		[ 'Dravidian',         '#44ccff' ],
-		[ 'Turkic',            '#cc44ff' ],
-		[ 'Japonic',           '#ff4444' ],
-		[ 'Koreanic',          '#44ffcc' ],
-		[ 'Uralic',            '#aaffaa' ],
+		[ 'Indo-European',      '#4488ff' ],
+		[ 'Sino-Tibetan',       '#ff8844' ],
+		[ 'Niger-Congo',        '#44ff88' ],
+		[ 'Afro-Asiatic',       '#ffcc44' ],
+		[ 'Austronesian',       '#ff44cc' ],
+		[ 'Dravidian',          '#44ccff' ],
+		[ 'Turkic',             '#cc44ff' ],
+		[ 'Japonic',            '#ff4444' ],
+		[ 'Koreanic',           '#44ffcc' ],
+		[ 'Uralic',             '#aaffaa' ],
+		[ 'Tai-Kadai',          '#ffaaaa' ],
+		[ 'Austro-Asiatic',     '#aaaaff' ],
+		[ 'Nilo-Saharan',       '#ffff44' ],
+		[ 'Trans-New Guinea',   '#ff8800' ],
+		[ 'Na-Dene',            '#88ff44' ],
+		[ 'Algic',              '#8844ff' ],
+		[ 'Quechuan',           '#ff6688' ],
+		[ 'Tupian',             '#66ff88' ],
+		[ 'Nakh-Daghestanian',  '#ffcc88' ],
+		[ 'Khoisan',            '#ff88ff' ],
 	];
 
 	$html = '';

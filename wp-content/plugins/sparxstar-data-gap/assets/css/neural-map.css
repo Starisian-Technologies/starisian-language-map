@@ -28,18 +28,18 @@
 }
 
 /* ── Canvas container ────────────────────────────────────────────────────── */
-#spx-neural-map {
+.spx-neural-map-canvas {
 	display: block;
 	width: 100%;
 	height: var( --spx-map-height, 600px );
 	cursor: grab;
 }
 
-#spx-neural-map:active {
+.spx-neural-map-canvas:active {
 	cursor: grabbing;
 }
 
-#spx-neural-map canvas {
+.spx-neural-map-canvas canvas {
 	display: block;
 	width: 100% !important;
 	height: 100% !important;
@@ -79,7 +79,7 @@
 }
 
 /* ── Tooltip ─────────────────────────────────────────────────────────────── */
-#spx-neural-map-tooltip {
+.spx-neural-map-tooltip {
 	display: none;
 	position: fixed;
 	padding: 6px 12px;
@@ -139,7 +139,7 @@
 
 /* ── Responsive adjustments ──────────────────────────────────────────────── */
 @media ( max-width: 600px ) {
-	#spx-neural-map {
+	.spx-neural-map-canvas {
 		height: 380px;
 	}
 	.spx-neural-map-legend {

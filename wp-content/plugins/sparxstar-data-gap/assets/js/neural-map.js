@@ -8,14 +8,9 @@
  * @version 1.0.0
  */
 
-/* global THREE, SPX_NEURAL_MAP_SETTINGS */
+/* global THREE */
 ( function ( THREE ) {
 	'use strict';
-
-	// ─── Settings defined from PHP via wp_add_inline_script ──────────────────
-	var settings = ( typeof SPX_NEURAL_MAP_SETTINGS !== 'undefined' )
-		? SPX_NEURAL_MAP_SETTINGS
-		: { containerId: 'spx-neural-map' };
 
 	// ─── Utility: lat/lon → 3-D point on unit sphere ─────────────────────────
 	function latLonToVec3( lat, lon, radius ) {
@@ -178,10 +173,8 @@
 		[10, 11],  // Tai-Kadai ↔ Austro-Asiatic
 	];
 
-	// ─── DOM ready guard ─────────────────────────────────────────────────────
-	function init() {
-		var containerId = settings.containerId || 'spx-neural-map';
-		var container   = document.getElementById( containerId );
+	// ─── Initialise a single map instance ───────────────────
+	function init( container ) {
 		if ( ! container ) {
 			return;
 		}
@@ -351,7 +344,7 @@
 		// ── Tooltip on click ─────────────────────────────────────────────────
 		var raycaster = new THREE.Raycaster();
 		var mouse     = new THREE.Vector2();
-		var tooltip   = document.getElementById( 'spx-neural-map-tooltip' );
+		var tooltip   = document.getElementById( container.getAttribute( 'data-tooltip-id' ) || '' );
 
 		if ( tooltip ) {
 			renderer.domElement.addEventListener( 'click', function ( e ) {
@@ -415,11 +408,18 @@
 		animate();
 	}
 
-	// ─── Bootstrap ───────────────────────────────────────────────────────────
+	// ─── Bootstrap: initialise every .spx-neural-map-canvas on the page ────
+	function bootAll() {
+		var containers = document.querySelectorAll( '.spx-neural-map-canvas' );
+		for ( var i = 0; i < containers.length; i++ ) {
+			init( containers[ i ] );
+		}
+	}
+
 	if ( document.readyState === 'loading' ) {
-		document.addEventListener( 'DOMContentLoaded', init );
+		document.addEventListener( 'DOMContentLoaded', bootAll );
 	} else {
-		init();
+		bootAll();
 	}
 
 }( THREE ) );
