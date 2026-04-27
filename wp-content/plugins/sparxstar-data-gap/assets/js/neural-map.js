@@ -339,7 +339,9 @@
 		}
 		function onPointerUp( e ) {
 			isDragging = false;
-			renderer.domElement.releasePointerCapture( e.pointerId );
+			if ( renderer.domElement.hasPointerCapture( e.pointerId ) ) {
+				renderer.domElement.releasePointerCapture( e.pointerId );
+			}
 		}
 
 		renderer.domElement.addEventListener( 'pointerdown', onPointerDown );   // not passive — needs setPointerCapture
