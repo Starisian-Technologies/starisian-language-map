@@ -21,7 +21,7 @@ Features:
 * Embedded land-ring data — no GeoJSON/TopoJSON runtime fetch.
 * Self-hosted DuneRise font — no db.onlinewebfonts.com request.
 * Drag-to-rotate, touch support, click-to-identify language nodes.
-* Accessible `role="img"` with `aria-label`.
+* Accessible labeling and descriptive text for assistive technologies.
 * Responsive — degrades gracefully on 2G/3G and low-end Android devices.
 
 Shortcode attributes:
