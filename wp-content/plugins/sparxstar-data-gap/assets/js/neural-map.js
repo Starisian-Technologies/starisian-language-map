@@ -354,32 +354,35 @@
 		var mouse     = new THREE.Vector2();
 		var tooltip   = document.getElementById( container.getAttribute( 'data-tooltip-id' ) || '' );
 
-		if ( tooltip ) {
-			renderer.domElement.addEventListener( 'click', function ( e ) {
-				var rect = renderer.domElement.getBoundingClientRect();
-				mouse.x  = ( ( e.clientX - rect.left ) / rect.width  ) * 2 - 1;
-				mouse.y  = -( ( e.clientY - rect.top  ) / rect.height ) * 2 + 1;
-				raycaster.setFromCamera( mouse, camera );
+		function onTooltipClick( e ) {
+			var rect = renderer.domElement.getBoundingClientRect();
+			mouse.x  = ( ( e.clientX - rect.left ) / rect.width  ) * 2 - 1;
+			mouse.y  = -( ( e.clientY - rect.top  ) / rect.height ) * 2 + 1;
+			raycaster.setFromCamera( mouse, camera );
 
-				var dotMeshes = nodeObjects.map( function ( n ) { return n.dot; } );
-				var hits      = raycaster.intersectObjects( dotMeshes );
-				if ( hits.length > 0 ) {
-					var idx = dotMeshes.indexOf( hits[ 0 ].object );
-					var fam = LANGUAGE_FAMILIES[ idx ];
-					if ( fam ) {
-						tooltip.textContent = fam.name + ' — ~' + fam.speakers + 'M speakers';
-						tooltip.style.display  = 'block';
-						tooltip.style.left     = e.clientX + 'px';
-						tooltip.style.top      = ( e.clientY - 36 ) + 'px';
-					}
-				} else {
-					tooltip.style.display = 'none';
+			var dotMeshes = nodeObjects.map( function ( n ) { return n.dot; } );
+			var hits      = raycaster.intersectObjects( dotMeshes );
+			if ( hits.length > 0 ) {
+				var idx = dotMeshes.indexOf( hits[ 0 ].object );
+				var fam = LANGUAGE_FAMILIES[ idx ];
+				if ( fam ) {
+					tooltip.textContent = fam.name + ' — ~' + fam.speakers + 'M speakers';
+					tooltip.style.display  = 'block';
+					tooltip.style.left     = e.clientX + 'px';
+					tooltip.style.top      = ( e.clientY - 36 ) + 'px';
 				}
-			}, { passive: true } );
+			} else {
+				tooltip.style.display = 'none';
+			}
+		}
+
+		if ( tooltip ) {
+			renderer.domElement.addEventListener( 'click', onTooltipClick, { passive: true } );
 		}
 
 		// ── Resize handler (ResizeObserver, per-container) ───────────────────
 		var resizeObserver = null;
+		var onResizeFallback = null;
 		if ( typeof ResizeObserver !== 'undefined' ) {
 			resizeObserver = new ResizeObserver( function ( entries ) {
 				var rect = entries[ 0 ].contentRect;
@@ -391,15 +394,15 @@
 			resizeObserver.observe( container );
 		} else {
 			// Fallback: global resize event for older browsers.
-			function onResize() {
+			onResizeFallback = function () {
 				var w = container.clientWidth;
 				var h = container.clientHeight;
 				if ( ! w || ! h ) { return; }
 				camera.aspect = w / h;
 				camera.updateProjectionMatrix();
 				renderer.setSize( w, h );
-			}
-			window.addEventListener( 'resize', onResize, { passive: true } );
+			};
+			window.addEventListener( 'resize', onResizeFallback, { passive: true } );
 		}
 
 		// ── Animation loop ────────────────────────────────────────────────────
@@ -438,10 +441,19 @@
 			renderer.domElement.removeEventListener( 'pointermove',   onPointerMove );
 			renderer.domElement.removeEventListener( 'pointerup',     onPointerUp );
 			renderer.domElement.removeEventListener( 'pointercancel', onPointerUp );
+			if ( tooltip ) {
+				renderer.domElement.removeEventListener( 'click', onTooltipClick );
+			}
 			if ( resizeObserver ) {
 				resizeObserver.disconnect();
 			}
+			if ( onResizeFallback ) {
+				window.removeEventListener( 'resize', onResizeFallback );
+			}
 			renderer.dispose();
+			if ( renderer.domElement.parentNode ) {
+				renderer.domElement.parentNode.removeChild( renderer.domElement );
+			}
 		};
 	}
 

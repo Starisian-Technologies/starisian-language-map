@@ -17,7 +17,7 @@ Use the shortcode `[sparxstar_data_gap]` on any page or post to embed the
 interactive Neural Language Map.
 
 Features:
-* Three.js r128 globe — served from the plugin, not an external CDN.
+* Three.js r0.184.0 globe — served from the plugin, not an external CDN.
 * Embedded land-ring data — no GeoJSON/TopoJSON runtime fetch.
 * Self-hosted DuneRise font — no db.onlinewebfonts.com request.
 * Drag-to-rotate, touch support, click-to-identify language nodes.
@@ -45,7 +45,7 @@ Example: `[sparxstar_data_gap height="500" heading="World Languages"]`
 
 = 1.0.0 =
 * Initial release.
-* Self-hosted Three.js r128.
+* Self-hosted Three.js r0.184.0 (bundled via esbuild, no CDN).
 * Embedded LAND_RINGS — async GeoJSON/TopoJSON fetch removed.
 * Self-hosted DuneRise font slot.
 * Shortcode [sparxstar_data_gap] with height and heading attributes.
