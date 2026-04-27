@@ -179,6 +179,12 @@
 			return;
 		}
 
+		// ── WebGL availability check ─────────────────────────────────────────
+		if ( ! window.WebGLRenderingContext ) {
+			container.innerHTML = '<p class="spx-neural-map-no-webgl">WebGL is not supported by your browser.</p>';
+			return;
+		}
+
 		// ── Scene setup ──────────────────────────────────────────────────────
 		var W = container.clientWidth  || 800;
 		var H = container.clientHeight || 600;
@@ -307,39 +313,39 @@
 		} );
 		scene.add( pivot );
 
-		// ── Mouse / touch drag interaction ────────────────────────────────────
-		var isDragging   = false;
-		var prevMouseX   = 0;
-		var prevMouseY   = 0;
+		// ── Pointer drag interaction (unified mouse + touch + stylus) ────────
+		var isDragging    = false;
+		var prevMouseX    = 0;
+		var prevMouseY    = 0;
 		var rotationSpeed = { x: 0, y: 0.0015 };
 
 		function onPointerDown( e ) {
 			isDragging = true;
-			var pt = e.touches ? e.touches[ 0 ] : e;
-			prevMouseX = pt.clientX;
-			prevMouseY = pt.clientY;
+			prevMouseX = e.clientX;
+			prevMouseY = e.clientY;
+			renderer.domElement.setPointerCapture( e.pointerId );
 		}
 		function onPointerMove( e ) {
 			if ( ! isDragging ) { return; }
-			var pt    = e.touches ? e.touches[ 0 ] : e;
-			var dx    = ( pt.clientX - prevMouseX ) * 0.005;
-			var dy    = ( pt.clientY - prevMouseY ) * 0.005;
+			var dx = ( e.clientX - prevMouseX ) * 0.005;
+			var dy = ( e.clientY - prevMouseY ) * 0.005;
 			pivot.rotation.y += dx;
 			pivot.rotation.x += dy;
 			// Clamp vertical rotation
 			pivot.rotation.x = Math.max( -1.2, Math.min( 1.2, pivot.rotation.x ) );
-			prevMouseX = pt.clientX;
-			prevMouseY = pt.clientY;
+			prevMouseX = e.clientX;
+			prevMouseY = e.clientY;
 			rotationSpeed.y = dx * 0.1;
 		}
-		function onPointerUp() { isDragging = false; }
+		function onPointerUp( e ) {
+			isDragging = false;
+			renderer.domElement.releasePointerCapture( e.pointerId );
+		}
 
-		renderer.domElement.addEventListener( 'mousedown',  onPointerDown, { passive: true } );
-		renderer.domElement.addEventListener( 'mousemove',  onPointerMove, { passive: true } );
-		renderer.domElement.addEventListener( 'mouseup',    onPointerUp,   { passive: true } );
-		renderer.domElement.addEventListener( 'touchstart', onPointerDown, { passive: true } );
-		renderer.domElement.addEventListener( 'touchmove',  onPointerMove, { passive: true } );
-		renderer.domElement.addEventListener( 'touchend',   onPointerUp,   { passive: true } );
+		renderer.domElement.addEventListener( 'pointerdown', onPointerDown );   // not passive — needs setPointerCapture
+		renderer.domElement.addEventListener( 'pointermove', onPointerMove, { passive: true } );
+		renderer.domElement.addEventListener( 'pointerup',   onPointerUp,   { passive: true } );
+		renderer.domElement.addEventListener( 'pointercancel', onPointerUp, { passive: true } );
 
 		// ── Tooltip on click ─────────────────────────────────────────────────
 		var raycaster = new THREE.Raycaster();
@@ -370,21 +376,35 @@
 			}, { passive: true } );
 		}
 
-		// ── Resize handler ────────────────────────────────────────────────────
-		function onResize() {
-			var w = container.clientWidth;
-			var h = container.clientHeight;
-			if ( ! w || ! h ) { return; }
-			camera.aspect = w / h;
-			camera.updateProjectionMatrix();
-			renderer.setSize( w, h );
+		// ── Resize handler (ResizeObserver, per-container) ───────────────────
+		var resizeObserver = null;
+		if ( typeof ResizeObserver !== 'undefined' ) {
+			resizeObserver = new ResizeObserver( function ( entries ) {
+				var rect = entries[ 0 ].contentRect;
+				if ( ! rect.width || ! rect.height ) { return; }
+				camera.aspect = rect.width / rect.height;
+				camera.updateProjectionMatrix();
+				renderer.setSize( rect.width, rect.height );
+			} );
+			resizeObserver.observe( container );
+		} else {
+			// Fallback: global resize event for older browsers.
+			function onResize() {
+				var w = container.clientWidth;
+				var h = container.clientHeight;
+				if ( ! w || ! h ) { return; }
+				camera.aspect = w / h;
+				camera.updateProjectionMatrix();
+				renderer.setSize( w, h );
+			}
+			window.addEventListener( 'resize', onResize, { passive: true } );
 		}
-		window.addEventListener( 'resize', onResize, { passive: true } );
 
 		// ── Animation loop ────────────────────────────────────────────────────
 		var clock = new THREE.Clock();
+		var animFrameId;
 		function animate() {
-			requestAnimationFrame( animate );
+			animFrameId = requestAnimationFrame( animate );
 
 			var elapsed = clock.getElapsedTime();
 
@@ -406,6 +426,21 @@
 			renderer.render( scene, camera );
 		}
 		animate();
+
+		// ── Teardown hook ─────────────────────────────────────────────────────
+		// Attach a spxDestroy() method to the container so callers (e.g. page
+		// builders, SPAs) can clean up GPU resources and observers.
+		container.spxDestroy = function () {
+			cancelAnimationFrame( animFrameId );
+			renderer.domElement.removeEventListener( 'pointerdown',   onPointerDown );
+			renderer.domElement.removeEventListener( 'pointermove',   onPointerMove );
+			renderer.domElement.removeEventListener( 'pointerup',     onPointerUp );
+			renderer.domElement.removeEventListener( 'pointercancel', onPointerUp );
+			if ( resizeObserver ) {
+				resizeObserver.disconnect();
+			}
+			renderer.dispose();
+		};
 	}
 
 	// ─── Bootstrap: lazy-init each map when it enters the viewport ────────
