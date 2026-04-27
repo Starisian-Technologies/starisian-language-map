@@ -408,11 +408,38 @@
 		animate();
 	}
 
-	// ─── Bootstrap: initialise every .spx-neural-map-canvas on the page ────
+	// ─── Bootstrap: lazy-init each map when it enters the viewport ────────
+	// Creating a WebGL renderer is expensive; deferring until the container
+	// is actually visible avoids wasted GPU work on long pages where the
+	// shortcode is below the fold.
 	function bootAll() {
 		var containers = document.querySelectorAll( '.spx-neural-map-canvas' );
+
+		// Fall back to eager init when IntersectionObserver is unavailable
+		// (e.g. very old Android WebView).
+		if ( typeof IntersectionObserver === 'undefined' ) {
+			for ( var i = 0; i < containers.length; i++ ) {
+				init( containers[ i ] );
+			}
+			return;
+		}
+
+		var observer = new IntersectionObserver(
+			function ( entries ) {
+				entries.forEach( function ( entry ) {
+					if ( ! entry.isIntersecting ) {
+						return;
+					}
+					// Stop observing this element and initialise the map.
+					observer.unobserve( entry.target );
+					init( entry.target );
+				} );
+			},
+			{ threshold: 0.1 }   // trigger when 10 % of the canvas is visible
+		);
+
 		for ( var i = 0; i < containers.length; i++ ) {
-			init( containers[ i ] );
+			observer.observe( containers[ i ] );
 		}
 	}
 
