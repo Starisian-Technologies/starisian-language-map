@@ -4,8 +4,8 @@
   "description": "WordPress plugin — Neural Language Map. Build tooling for minification.",
   "private": true,
   "scripts": {
-    "build": "npm run build:js && npm run build:css",
-    "build:js": "terser wp-content/plugins/sparxstar-data-gap/assets/js/neural-map.js --compress --mangle --output wp-content/plugins/sparxstar-data-gap/assets/js/neural-map.min.js",
+    "build": "npm run vendor:three && npm run build:js && npm run build:css",
+    "build:js": "esbuild wp-content/plugins/sparxstar-data-gap/assets/js/neural-map.js --bundle --inject:scripts/three-inject.js --format=iife --platform=browser --minify --outfile=wp-content/plugins/sparxstar-data-gap/assets/js/neural-map.min.js",
     "build:css": "postcss wp-content/plugins/sparxstar-data-gap/assets/css/neural-map.css --use cssnano --no-map --output wp-content/plugins/sparxstar-data-gap/assets/css/neural-map.min.css",
     "vendor:three": "esbuild scripts/three-entry.js --bundle --format=iife --platform=browser --minify --outfile=wp-content/plugins/sparxstar-data-gap/assets/js/three.min.js"
   },
@@ -14,7 +14,6 @@
     "esbuild": "^0.25.4",
     "postcss": "^8.5.3",
     "postcss-cli": "^11.0.1",
-    "terser": "^5.39.0",
     "three": "^0.184.0"
   }
 }

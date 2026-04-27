@@ -56,10 +56,19 @@ function spx_data_gap_register_assets(): void {
 	$js_min_path  = SPX_DATA_GAP_DIR . 'assets/js/neural-map.min.js';
 	$css_min_path = SPX_DATA_GAP_DIR . 'assets/css/neural-map.min.css';
 
-	$js_suffix  = ( ! $script_debug && file_exists( $js_min_path )  ) ? '.min' : '';
+	// True when we will load the esbuild production bundle (neural-map.min.js).
+	// That bundle includes Three.js internally, so no separate spx-three-js
+	// script is needed.  The source neural-map.js (SCRIPT_DEBUG / fresh
+	// checkout) still expects window.THREE set by three.min.js.
+	$use_bundle = ! $script_debug && file_exists( $js_min_path );
+
+	$js_suffix  = $use_bundle ? '.min' : '';
 	$css_suffix = ( ! $script_debug && file_exists( $css_min_path ) ) ? '.min' : '';
 
-	// Three.js r0.184 — self-hosted bundle generated via `npm run vendor:three`.
+	// Three.js — self-hosted bundle generated via `npm run vendor:three`.
+	// Loaded only when using the source neural-map.js (SCRIPT_DEBUG / fresh
+	// checkout).  When the production esbuild bundle is used, Three.js is
+	// already included inside neural-map.min.js and this script is skipped.
 	wp_register_script(
 		'spx-three-js',
 		SPX_DATA_GAP_URL . 'assets/js/three.min.js',
@@ -68,11 +77,16 @@ function spx_data_gap_register_assets(): void {
 		true   // Load in footer.
 	);
 
-	// Neural map visualization — depends on Three.js.
+	// Neural map visualization.
+	// • Production bundle (neural-map.min.js): Three.js bundled inside via
+	//   esbuild `--inject`, so no spx-three-js dependency.
+	// • Source file (neural-map.js, SCRIPT_DEBUG / fresh checkout): reads
+	//   window.THREE, so spx-three-js must load first.
+	$map_deps = $use_bundle ? [] : [ 'spx-three-js' ];
 	wp_register_script(
 		'spx-neural-map',
 		SPX_DATA_GAP_URL . "assets/js/neural-map{$js_suffix}.js",
-		[ 'spx-three-js' ],
+		$map_deps,
 		SPX_DATA_GAP_VERSION,
 		true   // Load in footer.
 	);

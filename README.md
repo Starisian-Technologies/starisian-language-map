@@ -57,7 +57,7 @@ npm run build
 
 This produces:
 
-- `assets/js/neural-map.min.js` — minified via [Terser](https://terser.org/)
+- `assets/js/neural-map.min.js` — esbuild bundle (Three.js + map code, self-contained IIFE)
 - `assets/css/neural-map.min.css` — minified via [cssnano](https://cssnano.github.io/cssnano/)
 
 The plugin loads `.min.` variants in production and the source files when
