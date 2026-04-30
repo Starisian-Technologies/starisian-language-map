@@ -2,8 +2,8 @@
 /**
  * Plugin Name:       Sparxstar Data Gap — Neural Language Map
  * Plugin URI:        https://starisian.com/plugins/sparxstar-data-gap
- * Description:       Embeds an interactive Three.js neural map of world language families via the [sparxstar_data_gap] shortcode. All assets are self-hosted — no external CDN or runtime fetches.
- * Version:           1.0.0
+ * Description:       Interactive data-gap visualization: language inter-connectivity and internet presence inequality, embedded via [sparxstar_data_gap].
+ * Version:           1.1.0
  * Requires at least: 6.2
  * Requires PHP:      8.2
  * Author:            Starisian Technologies
@@ -11,8 +11,6 @@
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       sparxstar-data-gap
- * Domain Path:       /languages
- * Network:           false
  *
  * @package Starisian\Sparxstar\DataGap
  */
@@ -40,85 +38,52 @@ if ( ! defined( 'SPX_DATA_GAP_URL' ) ) {
 
 /** Plugin version — bump on every release to bust asset caches. */
 if ( ! defined( 'SPX_DATA_GAP_VERSION' ) ) {
-	define( 'SPX_DATA_GAP_VERSION', '1.0.0' );
+	define( 'SPX_DATA_GAP_VERSION', '1.1.0' );
 }
-
-// ── i18n ──────────────────────────────────────────────────────────────────────
-
-/**
- * Load the plugin text domain so that translations in /languages are picked up
- * on installs that are not using translate.wordpress.org auto-loading.
- *
- * @return void
- */
-function spx_data_gap_load_textdomain(): void {
-	load_plugin_textdomain(
-		'sparxstar-data-gap',
-		false,
-		dirname( plugin_basename( __FILE__ ) ) . '/languages'
-	);
-}
-add_action( 'plugins_loaded', __NAMESPACE__ . '\\spx_data_gap_load_textdomain' );
 
 // ── Asset registration ────────────────────────────────────────────────────────
 
 /**
- * Register and enqueue front-end assets when the shortcode is present on the
- * current request.  Assets are registered on every request so that page
- * builders and caching plugins can discover them; they are only enqueued after
- * the shortcode has been rendered.
+ * Register front-end assets.
+ *
+ * Assets are registered on every request so that page builders and caching
+ * plugins can discover them; they are enqueued only after the shortcode
+ * renders.
  *
  * @return void
  */
 function spx_data_gap_register_assets(): void {
-	$script_debug = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG;
+	// Google Fonts — Noto Sans + Noto Sans Mono (used by the visualization UI).
+	wp_register_style(
+		'spx-noto-sans',
+		'https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500&family=Noto+Sans+Mono:wght@400&display=swap',
+		[],
+		null  // External; version managed by Google.
+	);
 
-	// Prefer unminified assets when SCRIPT_DEBUG is on.  When SCRIPT_DEBUG is
-	// off, load the .min. variant only if the build has been run; otherwise fall
-	// back to the source file so the plugin works in a fresh checkout too.
-	$js_min_path  = SPX_DATA_GAP_DIR . 'assets/js/neural-map.min.js';
-	$css_min_path = SPX_DATA_GAP_DIR . 'assets/css/neural-map.min.css';
-
-	// True when we will load the esbuild production bundle (neural-map.min.js).
-	// That bundle includes Three.js internally, so no separate spx-three-js
-	// script is needed.  The source neural-map.js (SCRIPT_DEBUG / fresh
-	// checkout) still expects window.THREE set by three.min.js.
-	$use_bundle = ! $script_debug && file_exists( $js_min_path );
-
-	$js_suffix  = $use_bundle ? '.min' : '';
-	$css_suffix = ( ! $script_debug && file_exists( $css_min_path ) ) ? '.min' : '';
-
-	// Three.js — self-hosted bundle generated via `npm run vendor:three`.
-	// Loaded only when using the source neural-map.js (SCRIPT_DEBUG / fresh
-	// checkout).  When the production esbuild bundle is used, Three.js is
-	// already included inside neural-map.min.js and this script is skipped.
+	// Self-hosted Three.js (r184) — sets window.THREE.
 	wp_register_script(
 		'spx-three-js',
 		SPX_DATA_GAP_URL . 'assets/js/three.min.js',
 		[],
 		'0.184.0',
-		true   // Load in footer.
+		true
 	);
 
-	// Neural map visualization.
-	// • Production bundle (neural-map.min.js): Three.js bundled inside via
-	//   esbuild `--inject`, so no spx-three-js dependency.
-	// • Source file (neural-map.js, SCRIPT_DEBUG / fresh checkout): reads
-	//   window.THREE, so spx-three-js must load first.
-	$map_deps = $use_bundle ? [] : [ 'spx-three-js' ];
+	// Visualization script — depends on Three.js being loaded first.
 	wp_register_script(
 		'spx-neural-map',
-		SPX_DATA_GAP_URL . "assets/js/neural-map{$js_suffix}.js",
-		$map_deps,
+		SPX_DATA_GAP_URL . 'assets/js/neural-map.js',
+		[ 'spx-three-js' ],
 		SPX_DATA_GAP_VERSION,
-		true   // Load in footer.
+		true
 	);
 
 	// Stylesheet.
 	wp_register_style(
 		'spx-neural-map',
-		SPX_DATA_GAP_URL . "assets/css/neural-map{$css_suffix}.css",
-		[],
+		SPX_DATA_GAP_URL . 'assets/css/neural-map.css',
+		[ 'spx-noto-sans' ],
 		SPX_DATA_GAP_VERSION
 	);
 }
@@ -130,148 +95,108 @@ add_action( 'wp_enqueue_scripts', __NAMESPACE__ . '\\spx_data_gap_register_asset
  * Render the [sparxstar_data_gap] shortcode.
  *
  * Accepted attributes:
- *   height  – Canvas height in px (default 600).
- *   heading – Overlay heading text (default 'Neural Language Map').
+ *   height – Visualization height in px (default 600, min 300).
  *
  * Example:
- *   [sparxstar_data_gap height="500" heading="World Languages"]
+ *   [sparxstar_data_gap height="700"]
  *
  * @param array<string,string>|string $atts Raw shortcode attributes.
  * @return string                           HTML output.
  */
 function spx_data_gap_shortcode( $atts ): string {
 	// Ensure assets are registered even when the shortcode runs before the
-	// wp_enqueue_scripts hook fires (e.g. theme calling do_shortcode() early,
-	// page-builder preview contexts).  wp_register_script/style are idempotent
-	// so calling this a second time after the hook is a no-op.
+	// wp_enqueue_scripts hook (e.g. page-builder preview contexts).
 	spx_data_gap_register_assets();
 
 	// Enqueue assets — safe to call multiple times; WP deduplicates.
 	wp_enqueue_style( 'spx-neural-map' );
 	wp_enqueue_script( 'spx-neural-map' );
 
-	// Sanitize and validate attributes.
 	$atts = shortcode_atts(
-		[
-			'height'  => '600',
-			'heading' => __( 'Neural Language Map', 'sparxstar-data-gap' ),
-		],
+		[ 'height' => '600' ],
 		$atts,
 		'sparxstar_data_gap'
 	);
 
-	$height  = absint( $atts['height'] );
-	$heading = sanitize_text_field( $atts['heading'] );
-
-	// Default height if absint() produced 0; otherwise clamp to the minimum.
-	if ( 0 === $height ) {
-		$height = 600;
-	} elseif ( $height < 200 ) {
-		$height = 200;
+	$height = absint( $atts['height'] );
+	if ( $height < 300 ) {
+		$height = $height > 0 ? 300 : 600;
 	}
 
-	// Generate unique IDs so multiple shortcode instances can coexist on one
-	// page without duplicate IDs or settings collisions.  Configuration is
-	// passed via data-* attributes on the container element; the JS reads from
-	// those attributes when it initialises each instance.
-	$container_id = wp_unique_id( 'spx-neural-map-' );
-	$tooltip_id   = $container_id . '-tooltip';
-
-	// Build language-family legend entries for accessibility / non-JS users.
-	$legend_items = spx_data_gap_legend_html();
-
-	// Height applied via CSS custom property so the stylesheet (and its
-	// responsive @media rules) can control sizing consistently.
-	$height_style = esc_attr( (string) $height . 'px' );
+	// Value is already sanitised by esc_attr(); phpcs:ignore used to avoid
+	// false-positive on the pre-escaped variable echo below.
+	$height_css = esc_attr( $height . 'px' );
 
 	ob_start();
 	?>
-	<div class="spx-neural-map-wrap">
-		<p id="<?php echo esc_attr( $container_id . '-heading' ); ?>" class="spx-neural-map-heading">
-			<?php echo esc_html( $heading ); ?>
-		</p>
-		<p id="<?php echo esc_attr( $container_id . '-subtitle' ); ?>" class="spx-neural-map-subtitle">
-			<?php esc_html_e( 'Interactive · Drag to rotate · Click a node', 'sparxstar-data-gap' ); ?>
-		</p>
+	<div class="spx-data-gap-wrap" style="--spx-dg-height:<?php echo $height_css; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- value is esc_attr sanitised above. ?>">
 
-		<div
-			id="<?php echo esc_attr( $container_id ); ?>"
-			class="spx-neural-map-canvas"
-			aria-labelledby="<?php echo esc_attr( $container_id . '-heading' ); ?>"
-			aria-describedby="<?php echo esc_attr( $container_id . '-subtitle' ); ?>"
-			data-tooltip-id="<?php echo esc_attr( $tooltip_id ); ?>"
-			style="--spx-map-height:<?php echo $height_style; ?>"
-		></div>
-
-		<div id="<?php echo esc_attr( $tooltip_id ); ?>" class="spx-neural-map-tooltip" role="tooltip" aria-live="polite"></div>
-
-		<div class="spx-neural-map-legend" aria-label="<?php esc_attr_e( 'Language family legend', 'sparxstar-data-gap' ); ?>">
-			<?php echo $legend_items; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside helper. ?>
+		<div id="wordmark">
+			<div id="wm-title">The Data Gap</div>
+			<div id="wm-sub">Sovereign Knowledge Network</div>
 		</div>
 
-		<p class="spx-neural-map-instructions" aria-hidden="true">
-			<?php esc_html_e( 'Drag · Scroll · Click', 'sparxstar-data-gap' ); ?>
-		</p>
-	</div><!-- .spx-neural-map-wrap -->
+		<div id="view-wrap">
+			<button class="vtab active" data-v="net">Language Inter-Connectivity</button>
+			<button class="vtab" data-v="globe">Internet Presence</button>
+		</div>
+
+		<div id="net-legend" class="vis">
+			<div id="nl-title">Cultural relatedness</div>
+			<div class="nl-row clickable" data-edge="bantu"><div class="nl-line" style="background:#7F77DD;height:3px;"></div>Bantu language family</div>
+			<div class="nl-row clickable" data-edge="trade"><div class="nl-line" style="background:#1D9E75;height:2px;"></div>Trade route lineage</div>
+			<div class="nl-row clickable" data-edge="diaspora"><div class="nl-line" style="background:#D85A30;height:2px;"></div>Diaspora / colonial link</div>
+			<div class="nl-row clickable" data-edge="distant"><div class="nl-line" style="background:rgba(255,255,255,0.15);height:1px;"></div>Distant relatedness</div>
+		</div>
+
+		<div id="globe-legend">
+			<div id="gl-title">Content Density &#8212; internet presence</div>
+			<div class="gl-row"><div class="gl-dot" style="background:#b2d8ff;"></div>85&#x2013;100 &middot; Sovereign producer</div>
+			<div class="gl-row"><div class="gl-dot" style="background:#5599cc;"></div>60&#x2013;85 &middot; Established presence</div>
+			<div class="gl-row"><div class="gl-dot" style="background:#cc7700;"></div>35&#x2013;60 &middot; Dependent / emerging</div>
+			<div class="gl-row"><div class="gl-dot" style="background:#661111;"></div>0&#x2013;35 &middot; Near invisible online</div>
+			<div class="gl-row" style="margin-top:4px;">
+				<div style="width:30px;height:2px;background:rgba(100,150,255,0.6);border-radius:1px;"></div>Sovereign data pipe
+			</div>
+			<div class="gl-row">
+				<div style="width:30px;height:1px;background:rgba(100,100,150,0.25);border-radius:1px;"></div>Dependent outflow
+			</div>
+		</div>
+
+		<div id="info">
+			<div id="info-label">What you&#x2019;re seeing</div>
+			<div id="info-text">33% of world languages are African. Each node is a language community plotted by cultural relatedness &#8212; not geography. The dense African core shows ancient interconnection invisible on any map.</div>
+		</div>
+
+		<div id="stats">
+			<div class="stat-card"><div class="stat-num" id="stat-gap">&#8212;</div><div class="stat-lbl">Avg latency gap &middot; Africa</div></div>
+			<div class="stat-card"><div class="stat-num" id="stat-content">&#8212;</div><div class="stat-lbl">Avg content density &middot; Africa</div></div>
+		</div>
+
+		<button id="spark-btn">Spark sovereignty</button>
+
+		<div id="tip">
+			<div id="tip-city"></div>
+			<div id="tip-rows">
+				<div class="tip-bar"><span class="tip-label">Usage</span><div class="tip-track"><div class="tip-fill" id="tf-usage" style="background:#7F77DD;"></div></div><span id="tv-usage"></span></div>
+				<div class="tip-bar"><span class="tip-label">Content</span><div class="tip-track"><div class="tip-fill" id="tf-content" style="background:#1D9E75;"></div></div><span id="tv-content"></span></div>
+				<div class="tip-bar"><span class="tip-label">Gap</span><div class="tip-track"><div class="tip-fill" id="tf-gap" style="background:#D85A30;"></div></div><span id="tv-gap"></span></div>
+			</div>
+		</div>
+
+		<div id="flash"></div>
+		<canvas id="c3d"></canvas>
+
+	</div><!-- .spx-data-gap-wrap -->
 	<?php
 	return (string) ob_get_clean();
 }
 add_shortcode( 'sparxstar_data_gap', __NAMESPACE__ . '\\spx_data_gap_shortcode' );
 
-// ── Internal helpers ──────────────────────────────────────────────────────────
-
-/**
- * Build escaped HTML for the language-family legend.
- *
- * Colours must match the hex values used in neural-map.js so that the legend
- * and canvas nodes stay in sync.
- *
- * @return string Safe HTML string.
- */
-function spx_data_gap_legend_html(): string {
-	$families = [
-		[ 'Indo-European',      '#4488ff' ],
-		[ 'Sino-Tibetan',       '#ff8844' ],
-		[ 'Niger-Congo',        '#44ff88' ],
-		[ 'Afro-Asiatic',       '#ffcc44' ],
-		[ 'Austronesian',       '#ff44cc' ],
-		[ 'Dravidian',          '#44ccff' ],
-		[ 'Turkic',             '#cc44ff' ],
-		[ 'Japonic',            '#ff4444' ],
-		[ 'Koreanic',           '#44ffcc' ],
-		[ 'Uralic',             '#aaffaa' ],
-		[ 'Tai-Kadai',          '#ffaaaa' ],
-		[ 'Austro-Asiatic',     '#aaaaff' ],
-		[ 'Nilo-Saharan',       '#ffff44' ],
-		[ 'Trans-New Guinea',   '#ff8800' ],
-		[ 'Na-Dene',            '#88ff44' ],
-		[ 'Algic',              '#8844ff' ],
-		[ 'Quechuan',           '#ff6688' ],
-		[ 'Tupian',             '#66ff88' ],
-		[ 'Nakh-Daghestanian',  '#ffcc88' ],
-		[ 'Khoisan',            '#ff88ff' ],
-	];
-
-	$html = '';
-	foreach ( $families as $family ) {
-		$name  = esc_html( $family[0] );
-		$color = esc_attr( $family[1] );
-		$html .= sprintf(
-			'<div class="spx-neural-map-legend-item">'
-			. '<span class="spx-neural-map-legend-dot" style="background:%s" aria-hidden="true"></span>'
-			. '<span>%s</span>'
-			. '</div>',
-			$color,
-			$name
-		);
-	}
-	return $html;
-}
-
 // ── Plugin lifecycle ──────────────────────────────────────────────────────────
 
 /**
- * Runs on plugin activation.  No database tables needed by this version.
+ * Runs on plugin activation.
  *
  * @return void
  */

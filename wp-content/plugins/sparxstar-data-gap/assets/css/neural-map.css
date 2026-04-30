@@ -1,165 +1,354 @@
 /**
- * Sparxstar Data Gap — Neural Language Map styles
+ * Sparxstar Data Gap — The Data Gap visualization styles.
  *
- * Self-hosted Dune Rise font.  Place DuneRise.woff2 in assets/fonts/.
+ * Scoped to .spx-data-gap-wrap so it does not bleed into the page.
+ * DuneRise font served from assets/fonts/ (self-hosted).
  *
  * @package sparxstar-data-gap
- * @version 1.0.0
+ * @version 1.1.0
  */
 
-/* ── Self-hosted Dune Rise font ──────────────────────────────────────────── */
 @font-face {
-	font-family: 'DuneRise';
-	src: url( '../fonts/DuneRise.woff2' ) format( 'woff2' ),
-	     url( '../fonts/DuneRise.woff' )  format( 'woff' );
-	font-weight: normal;
-	font-style: normal;
-	font-display: swap;
+font-family: 'Dune Rise';
+src: url( '../fonts/DuneRise.woff2' ) format( 'woff2' ),
+     url( '../fonts/DuneRise.woff' )  format( 'woff' );
+font-weight: normal;
+font-style: normal;
+font-display: swap;
 }
 
-/* ── Wrapper ─────────────────────────────────────────────────────────────── */
-.spx-neural-map-wrap {
-	position: relative;
-	width: 100%;
-	background: #000010;
-	overflow: hidden;
-	border-radius: 4px;
-	box-sizing: border-box;
+/* ── Container ───────────────────────────────────────────────────────────── */
+.spx-data-gap-wrap {
+position: relative;
+width: 100%;
+height: var( --spx-dg-height, 600px );
+overflow: hidden;
+background: #04040e;
+font-family: 'Noto Sans', sans-serif;
+color: #fff;
+font-weight: 500;
 }
 
-/* ── Canvas container ────────────────────────────────────────────────────── */
-.spx-neural-map-canvas {
-	display: block;
-	width: 100%;
-	height: var( --spx-map-height, 600px );
-	cursor: grab;
+.spx-data-gap-wrap * {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+user-select: none;
 }
 
-.spx-neural-map-canvas:active {
-	cursor: grabbing;
+/* ── Canvas ──────────────────────────────────────────────────────────────── */
+.spx-data-gap-wrap canvas {
+position: absolute;
+top: 0;
+left: 0;
+display: block;
 }
 
-.spx-neural-map-canvas canvas {
-	display: block;
-	width: 100% !important;
-	height: 100% !important;
+.spx-data-gap-wrap #c3d {
+width: 100%;
+height: 100%;
+cursor: crosshair;
+z-index: 1;
 }
 
-/* ── No-WebGL fallback message ───────────────────────────────────────────── */
-.spx-neural-map-no-webgl {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 100%;
-	height: var( --spx-map-height, 600px );
-	margin: 0;
-	padding: 2rem;
-	box-sizing: border-box;
-	color: #7ab3ff;
-	font-family: 'DuneRise', 'Segoe UI', Tahoma, sans-serif;
-	font-size: clamp( 0.875rem, 2vw, 1.125rem );
-	text-align: center;
-	letter-spacing: 0.1em;
+/* ── Wordmark ────────────────────────────────────────────────────────────── */
+.spx-data-gap-wrap #wordmark {
+position: absolute;
+top: 32px;
+left: 40px;
+z-index: 20;
 }
 
-/* ── Heading overlay ─────────────────────────────────────────────────────── */
-.spx-neural-map-heading {
-	position: absolute;
-	top: 16px;
-	left: 50%;
-	transform: translateX(-50%);
-	font-family: 'DuneRise', 'Segoe UI', Tahoma, sans-serif;
-	font-size: clamp( 1rem, 2.5vw, 1.75rem );
-	color: #7ab3ff;
-	letter-spacing: 0.18em;
-	text-transform: uppercase;
-	text-align: center;
-	text-shadow: 0 0 20px rgba( 74, 136, 255, 0.8 );
-	pointer-events: none;
-	white-space: nowrap;
+.spx-data-gap-wrap #wm-title {
+font-size: 14px;
+font-weight: 400;
+letter-spacing: 0.22em;
+text-transform: uppercase;
+color: rgba( 255, 255, 255, 0.92 );
+font-family: 'Dune Rise', 'Noto Sans', sans-serif;
 }
 
-/* ── Subtitle ────────────────────────────────────────────────────────────── */
-.spx-neural-map-subtitle {
-	position: absolute;
-	top: 52px;
-	left: 50%;
-	transform: translateX(-50%);
-	font-family: 'DuneRise', 'Segoe UI', Tahoma, sans-serif;
-	font-size: clamp( 0.6rem, 1.2vw, 0.85rem );
-	color: rgba( 122, 179, 255, 0.6 );
-	letter-spacing: 0.25em;
-	text-transform: uppercase;
-	text-align: center;
-	pointer-events: none;
-	white-space: nowrap;
+.spx-data-gap-wrap #wm-sub {
+font-family: 'Noto Sans Mono', monospace;
+font-size: 9px;
+font-weight: 500;
+color: rgba( 255, 255, 255, 0.28 );
+letter-spacing: 0.14em;
+text-transform: uppercase;
+margin-top: 3px;
+}
+
+/* ── View toggle ─────────────────────────────────────────────────────────── */
+.spx-data-gap-wrap #view-wrap {
+position: absolute;
+top: 32px;
+left: 50%;
+transform: translateX( -50% );
+z-index: 20;
+display: flex;
+gap: 0;
+}
+
+.spx-data-gap-wrap .vtab {
+padding: 8px 22px;
+font-size: 10px;
+letter-spacing: 0.18em;
+text-transform: uppercase;
+font-weight: 500;
+cursor: pointer;
+border: 1px solid rgba( 255, 255, 255, 0.12 );
+background: rgba( 0, 0, 0, 0.4 );
+color: rgba( 255, 255, 255, 0.4 );
+transition: all 0.25s;
+font-family: 'Noto Sans', sans-serif;
+}
+
+.spx-data-gap-wrap .vtab:first-child { border-radius: 3px 0 0 3px; }
+.spx-data-gap-wrap .vtab:last-child  { border-radius: 0 3px 3px 0; border-left: none; }
+
+.spx-data-gap-wrap .vtab.active {
+background: rgba( 255, 255, 255, 0.09 );
+color: rgba( 255, 255, 255, 0.9 );
+border-color: rgba( 255, 255, 255, 0.3 );
+}
+
+.spx-data-gap-wrap .vtab:hover:not( .active ) {
+background: rgba( 255, 255, 255, 0.05 );
+color: rgba( 255, 255, 255, 0.65 );
+}
+
+/* ── Globe legend ────────────────────────────────────────────────────────── */
+.spx-data-gap-wrap #globe-legend {
+position: absolute;
+top: 32px;
+right: 36px;
+z-index: 20;
+display: flex;
+flex-direction: column;
+gap: 5px;
+align-items: flex-end;
+opacity: 0;
+pointer-events: none;
+transition: opacity 0.4s;
+}
+
+.spx-data-gap-wrap #globe-legend.vis { opacity: 1; pointer-events: auto; }
+
+.spx-data-gap-wrap #gl-title {
+font-family: 'Noto Sans Mono', monospace;
+font-size: 9px;
+font-weight: 500;
+letter-spacing: 0.18em;
+text-transform: uppercase;
+color: rgba( 255, 255, 255, 0.3 );
+margin-bottom: 4px;
+}
+
+.spx-data-gap-wrap .gl-row {
+display: flex;
+align-items: center;
+gap: 8px;
+font-size: 10px;
+font-weight: 500;
+color: rgba( 255, 255, 255, 0.65 );
+}
+
+.spx-data-gap-wrap .gl-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Neural legend ───────────────────────────────────────────────────────── */
+.spx-data-gap-wrap #net-legend {
+position: absolute;
+top: 32px;
+right: 36px;
+z-index: 20;
+display: flex;
+flex-direction: column;
+gap: 4px;
+align-items: flex-end;
+opacity: 0;
+pointer-events: none;
+transition: opacity 0.4s;
+}
+
+.spx-data-gap-wrap #net-legend.vis { opacity: 1; pointer-events: auto; }
+
+.spx-data-gap-wrap #nl-title {
+font-family: 'Noto Sans Mono', monospace;
+font-size: 9px;
+font-weight: 500;
+letter-spacing: 0.18em;
+text-transform: uppercase;
+color: rgba( 255, 255, 255, 0.3 );
+margin-bottom: 4px;
+}
+
+.spx-data-gap-wrap .nl-row {
+display: flex;
+align-items: center;
+gap: 8px;
+font-size: 10px;
+font-weight: 500;
+color: rgba( 255, 255, 255, 0.65 );
+}
+
+.spx-data-gap-wrap .nl-row.clickable { cursor: pointer; transition: color 0.2s; }
+.spx-data-gap-wrap .nl-row.clickable:hover { color: #fff; }
+.spx-data-gap-wrap .nl-row.clickable.active-crackle { color: #fff; }
+.spx-data-gap-wrap .nl-line { width: 22px; height: 2px; flex-shrink: 0; border-radius: 1px; }
+
+/* ── Info panel ──────────────────────────────────────────────────────────── */
+.spx-data-gap-wrap #info {
+position: absolute;
+bottom: 40px;
+left: 40px;
+z-index: 20;
+max-width: 340px;
+}
+
+.spx-data-gap-wrap #info-label {
+font-family: 'Noto Sans Mono', monospace;
+font-size: 9px;
+font-weight: 500;
+letter-spacing: 0.18em;
+text-transform: uppercase;
+color: rgba( 255, 255, 255, 0.28 );
+margin-bottom: 6px;
+}
+
+.spx-data-gap-wrap #info-text {
+font-size: 12px;
+line-height: 1.75;
+color: rgba( 255, 255, 255, 0.65 );
+font-weight: 500;
 }
 
 /* ── Tooltip ─────────────────────────────────────────────────────────────── */
-.spx-neural-map-tooltip {
-	display: none;
-	position: fixed;
-	padding: 6px 12px;
-	background: rgba( 10, 20, 60, 0.92 );
-	border: 1px solid rgba( 74, 136, 255, 0.5 );
-	border-radius: 4px;
-	color: #b0d4ff;
-	font-family: 'DuneRise', 'Segoe UI', Tahoma, sans-serif;
-	font-size: 0.78rem;
-	letter-spacing: 0.08em;
-	pointer-events: none;
-	z-index: 9999;
-	white-space: nowrap;
-	transform: translate( -50%, -100% );
+.spx-data-gap-wrap #tip {
+position: absolute;
+z-index: 30;
+background: rgba( 4, 4, 14, 0.92 );
+border: 1px solid rgba( 255, 255, 255, 0.12 );
+border-radius: 6px;
+padding: 10px 14px;
+font-size: 11px;
+line-height: 1.6;
+pointer-events: none;
+display: none;
+min-width: 160px;
 }
 
-/* ── Legend ──────────────────────────────────────────────────────────────── */
-.spx-neural-map-legend {
-	position: absolute;
-	bottom: 16px;
-	left: 16px;
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-	pointer-events: none;
+.spx-data-gap-wrap #tip-city { font-weight: 500; font-size: 13px; color: #fff; margin-bottom: 4px; }
+.spx-data-gap-wrap #tip-rows { color: rgba( 255, 255, 255, 0.6 ); }
+
+.spx-data-gap-wrap .tip-bar { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+
+.spx-data-gap-wrap .tip-label {
+font-family: 'Noto Sans Mono', monospace;
+font-size: 9px;
+font-weight: 500;
+color: rgba( 255, 255, 255, 0.4 );
+width: 52px;
 }
 
-.spx-neural-map-legend-item {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	font-family: 'DuneRise', 'Segoe UI', Tahoma, sans-serif;
-	font-size: 0.65rem;
-	color: rgba( 180, 210, 255, 0.7 );
-	letter-spacing: 0.1em;
+.spx-data-gap-wrap .tip-track {
+flex: 1;
+height: 4px;
+background: rgba( 255, 255, 255, 0.08 );
+border-radius: 2px;
+overflow: hidden;
 }
 
-.spx-neural-map-legend-dot {
-	width: 8px;
-	height: 8px;
-	border-radius: 50%;
-	flex-shrink: 0;
+.spx-data-gap-wrap .tip-fill { height: 100%; border-radius: 2px; }
+
+/* ── Spark button ────────────────────────────────────────────────────────── */
+.spx-data-gap-wrap #spark-btn {
+position: absolute;
+bottom: 40px;
+left: 50%;
+transform: translateX( -50% );
+z-index: 20;
+background: transparent;
+border: 1px solid rgba( 255, 255, 255, 0.18 );
+border-radius: 30px;
+padding: 9px 28px;
+cursor: pointer;
+font-family: 'Noto Sans', sans-serif;
+font-size: 10px;
+font-weight: 500;
+letter-spacing: 0.2em;
+text-transform: uppercase;
+color: rgba( 255, 255, 255, 0.65 );
+transition: all 0.3s;
 }
 
-/* ── Instructions ────────────────────────────────────────────────────────── */
-.spx-neural-map-instructions {
-	position: absolute;
-	bottom: 16px;
-	right: 16px;
-	font-family: 'DuneRise', 'Segoe UI', Tahoma, sans-serif;
-	font-size: 0.65rem;
-	color: rgba( 122, 179, 255, 0.45 );
-	letter-spacing: 0.08em;
-	text-align: right;
-	pointer-events: none;
+.spx-data-gap-wrap #spark-btn:hover {
+background: rgba( 255, 255, 255, 0.06 );
+border-color: rgba( 255, 255, 255, 0.35 );
+color: #fff;
 }
 
-/* ── Responsive adjustments ──────────────────────────────────────────────── */
-@media ( max-width: 600px ) {
-	.spx-neural-map-canvas {
-		height: min( var( --spx-map-height, 600px ), 380px );
-	}
-	.spx-neural-map-legend {
-		display: none;
-	}
+.spx-data-gap-wrap #spark-btn.on {
+border-color: rgba( 100, 80, 220, 0.7 );
+color: rgba( 180, 160, 255, 0.9 );
+}
+
+/* ── Morph flash ─────────────────────────────────────────────────────────── */
+.spx-data-gap-wrap #flash {
+position: absolute;
+inset: 0;
+background: #04040e;
+opacity: 0;
+pointer-events: none;
+z-index: 16;
+transition: opacity 0.3s;
+}
+
+.spx-data-gap-wrap #flash.go { opacity: 0.8; }
+
+/* ── Stats bar ───────────────────────────────────────────────────────────── */
+.spx-data-gap-wrap #stats {
+position: absolute;
+bottom: 40px;
+right: 36px;
+z-index: 20;
+display: flex;
+flex-direction: column;
+gap: 8px;
+align-items: flex-end;
+opacity: 0;
+pointer-events: none;
+transition: opacity 0.4s;
+}
+
+.spx-data-gap-wrap #stats.vis { opacity: 1; }
+
+.spx-data-gap-wrap .stat-card {
+background: rgba( 255, 255, 255, 0.04 );
+border: 1px solid rgba( 255, 255, 255, 0.08 );
+border-radius: 6px;
+padding: 8px 14px;
+text-align: right;
+}
+
+.spx-data-gap-wrap .stat-num { font-size: 20px; font-weight: 500; color: #fff; }
+
+.spx-data-gap-wrap .stat-lbl {
+font-family: 'Noto Sans Mono', monospace;
+font-size: 9px;
+font-weight: 500;
+color: rgba( 255, 255, 255, 0.3 );
+letter-spacing: 0.1em;
+text-transform: uppercase;
+margin-top: 2px;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media ( max-width: 640px ) {
+.spx-data-gap-wrap #wordmark { left: 16px; top: 16px; }
+.spx-data-gap-wrap #view-wrap { top: auto; bottom: 110px; left: 50%; transform: translateX( -50% ); }
+.spx-data-gap-wrap #info { display: none; }
+.spx-data-gap-wrap #globe-legend,
+.spx-data-gap-wrap #net-legend { top: auto; bottom: 160px; right: 16px; }
+.spx-data-gap-wrap #spark-btn { bottom: 20px; }
+.spx-data-gap-wrap #stats { bottom: auto; top: 70px; right: 16px; }
 }
