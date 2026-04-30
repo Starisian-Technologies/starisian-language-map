@@ -8,7 +8,7 @@ Stable tag: 1.1.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Interactive data-gap visualization of language families and internet presence inequality via [sparxstar_data_gap].
+Interactive Data Gap visualization of language families and internet presence inequality, embedded via [sparxstar_data_gap].
 
 == Description ==
 
