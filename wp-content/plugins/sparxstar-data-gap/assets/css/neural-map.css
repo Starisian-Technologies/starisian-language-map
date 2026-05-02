@@ -22,6 +22,7 @@ font-display: swap;
 position: relative;
 width: 100%;
 height: var( --spx-dg-height, 600px );
+max-height: 750px;
 overflow: hidden;
 background: #04040e;
 font-family: 'Noto Sans', sans-serif;
@@ -343,7 +344,16 @@ margin-top: 2px;
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
+@media ( max-width: 1024px ) {
+.spx-data-gap-wrap { max-height: 600px; }
+}
+
+@media ( max-width: 768px ) {
+.spx-data-gap-wrap { max-height: 480px; }
+}
+
 @media ( max-width: 640px ) {
+.spx-data-gap-wrap { max-height: 380px; }
 .spx-data-gap-wrap #wordmark { left: 16px; top: 16px; }
 .spx-data-gap-wrap #view-wrap { top: auto; bottom: 110px; left: 50%; transform: translateX( -50% ); }
 .spx-data-gap-wrap #info { display: none; }
