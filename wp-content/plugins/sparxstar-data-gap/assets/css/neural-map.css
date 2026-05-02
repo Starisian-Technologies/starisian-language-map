@@ -344,10 +344,6 @@ margin-top: 2px;
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
-@media ( max-width: 1024px ) {
-.spx-data-gap-wrap { max-height: 750px; }
-}
-
 @media ( max-width: 768px ) {
 .spx-data-gap-wrap { max-height: 480px; }
 }
