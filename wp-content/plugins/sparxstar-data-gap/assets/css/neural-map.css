@@ -21,7 +21,7 @@ font-display: swap;
 .spx-data-gap-wrap {
 position: relative;
 width: 100%;
-height: var( --spx-dg-height, 600px );
+height: var( --spx-dg-height, 750px );
 max-height: 750px;
 overflow: hidden;
 background: #04040e;
@@ -345,7 +345,7 @@ margin-top: 2px;
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media ( max-width: 1024px ) {
-.spx-data-gap-wrap { max-height: 600px; }
+.spx-data-gap-wrap { max-height: 750px; }
 }
 
 @media ( max-width: 768px ) {

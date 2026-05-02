@@ -113,14 +113,14 @@ function spx_data_gap_shortcode( $atts ): string {
 	wp_enqueue_script( 'spx-neural-map' );
 
 	$atts = shortcode_atts(
-		[ 'height' => '600' ],
+		[ 'height' => '750' ],
 		$atts,
 		'sparxstar_data_gap'
 	);
 
 	$height = absint( $atts['height'] );
 	if ( $height < 300 ) {
-		$height = $height > 0 ? 300 : 600;
+		$height = $height > 0 ? 300 : 750;
 	} elseif ( $height > 750 ) {
 		$height = 750;
 	}
