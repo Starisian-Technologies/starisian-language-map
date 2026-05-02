@@ -95,7 +95,7 @@ add_action( 'wp_enqueue_scripts', __NAMESPACE__ . '\\spx_data_gap_register_asset
  * Render the [sparxstar_data_gap] shortcode.
  *
  * Accepted attributes:
- *   height – Visualization height in px (default 600, min 300).
+ *   height – Visualization height in px (default 600, min 300, max 750).
  *
  * Example:
  *   [sparxstar_data_gap height="700"]
@@ -121,6 +121,8 @@ function spx_data_gap_shortcode( $atts ): string {
 	$height = absint( $atts['height'] );
 	if ( $height < 300 ) {
 		$height = $height > 0 ? 300 : 600;
+	} elseif ( $height > 750 ) {
+		$height = 750;
 	}
 
 	// Value is already sanitised by esc_attr(); phpcs:ignore used to avoid
