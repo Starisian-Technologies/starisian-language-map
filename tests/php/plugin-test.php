@@ -159,11 +159,13 @@ try {
 
 	$render_cases = [
 		[ 'atts' => [], 'height' => '750px', 'label' => 'default height' ],
+		[ 'atts' => [ 'height' => '750' ], 'height' => '750px', 'label' => 'max boundary exact value' ],
 		[ 'atts' => [ 'height' => '900' ], 'height' => '750px', 'label' => 'max clamp' ],
 		[ 'atts' => [ 'height' => '250' ], 'height' => '300px', 'label' => 'min clamp positive value' ],
 		[ 'atts' => [ 'height' => '0' ], 'height' => '750px', 'label' => 'zero height defaults' ],
 		[ 'atts' => [ 'height' => 'abc' ], 'height' => '750px', 'label' => 'non-numeric defaults' ],
 		[ 'atts' => [ 'height' => '-25' ], 'height' => '300px', 'label' => 'negative coerced then clamped' ],
+		[ 'atts' => [ 'height' => '-500' ], 'height' => '500px', 'label' => 'larger negative coerced via absint' ],
 		[ 'atts' => [ 'height' => '640' ], 'height' => '640px', 'label' => 'valid custom height' ],
 	];
 
