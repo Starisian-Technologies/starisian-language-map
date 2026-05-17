@@ -61,50 +61,50 @@ final class PluginTest extends TestCase {
 	 *
 	 * @param array<string, string> $atts
 	 */
-	public function test_shortcode_output_and_enqueues(array $atts, string $height, string $label): void {
+	public function test_shortcode_output_and_enqueues(array $atts, string $height): void {
 		$html = \Starisian\Sparxstar\DataGap\spx_data_gap_shortcode( $atts );
 
 		self::assertStringContainsString(
 			'--spx-dg-height:' . $height,
 			$html,
-			'Inline CSS height mismatch for case: ' . $label
+			'Inline CSS height mismatch'
 		);
 		self::assertStringContainsString(
 			'class="spx-data-gap-wrap"',
 			$html,
-			'Missing wrapper for case: ' . $label
+			'Missing wrapper'
 		);
 		self::assertStringContainsString(
 			'<canvas id="c3d"></canvas>',
 			$html,
-			'Missing canvas for case: ' . $label
+			'Missing canvas'
 		);
 		self::assertContains(
 			'spx-neural-map',
 			$GLOBALS['state']['enqueued_styles'],
-			'Expected style enqueue for case: ' . $label
+			'Expected style enqueue'
 		);
 		self::assertContains(
 			'spx-neural-map',
 			$GLOBALS['state']['enqueued_scripts'],
-			'Expected script enqueue for case: ' . $label
+			'Expected script enqueue'
 		);
 	}
 
 	/**
-	 * @return array<string, array{0: array<string, string>, 1: string, 2: string}>
+	 * @return array<string, array{0: array<string, string>, 1: string}>
 	 */
 	public function shortcodeHeightCases(): array {
 		return [
-			'default height'                       => [ [], '750px', 'default height' ],
-			'max boundary exact value'            => [ [ 'height' => '750' ], '750px', 'max boundary exact value' ],
-			'max clamp'                           => [ [ 'height' => '900' ], '750px', 'max clamp' ],
-			'min clamp positive value'            => [ [ 'height' => '250' ], '300px', 'min clamp positive value' ],
-			'zero height defaults'                => [ [ 'height' => '0' ], '750px', 'zero height defaults' ],
-			'non-numeric defaults'                => [ [ 'height' => 'abc' ], '750px', 'non-numeric defaults' ],
-			'negative coerced then clamped'       => [ [ 'height' => '-25' ], '300px', 'negative coerced then clamped' ],
-			'larger negative coerced via absint'  => [ [ 'height' => '-500' ], '500px', 'larger negative coerced via absint' ],
-			'valid custom height'                 => [ [ 'height' => '640' ], '640px', 'valid custom height' ],
+			'default height'                      => [ [], '750px' ],
+			'max boundary exact value'           => [ [ 'height' => '750' ], '750px' ],
+			'max clamp'                          => [ [ 'height' => '900' ], '750px' ],
+			'min clamp positive value'           => [ [ 'height' => '250' ], '300px' ],
+			'zero height defaults'               => [ [ 'height' => '0' ], '750px' ],
+			'non-numeric defaults'               => [ [ 'height' => 'abc' ], '750px' ],
+			'negative coerced then clamped'      => [ [ 'height' => '-25' ], '300px' ],
+			'larger negative coerced via absint' => [ [ 'height' => '-500' ], '500px' ],
+			'valid custom height'                => [ [ 'height' => '640' ], '640px' ],
 		];
 	}
 }
