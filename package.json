@@ -5,6 +5,8 @@
   "private": true,
   "scripts": {
     "build": "npm run vendor:three && npm run build:js && npm run build:css",
+    "test": "npm run test:php",
+    "test:php": "phpunit --configuration tests/php/phpunit.xml",
     "build:js": "esbuild wp-content/plugins/sparxstar-data-gap/assets/js/neural-map.js --bundle --inject:scripts/three-inject.js --format=iife --platform=browser --minify --outfile=wp-content/plugins/sparxstar-data-gap/assets/js/neural-map.min.js",
     "build:css": "postcss wp-content/plugins/sparxstar-data-gap/assets/css/neural-map.css --use cssnano --no-map --output wp-content/plugins/sparxstar-data-gap/assets/css/neural-map.min.css",
     "vendor:three": "esbuild scripts/three-entry.js --bundle --format=iife --platform=browser --minify --outfile=wp-content/plugins/sparxstar-data-gap/assets/js/three.min.js"
