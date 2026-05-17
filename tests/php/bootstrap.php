@@ -59,17 +59,7 @@ function wp_enqueue_script( $handle ): void {
 
 function shortcode_atts( array $pairs, $atts, string $shortcode = '' ): array {
 	$atts = is_array( $atts ) ? $atts : [];
-	$out  = [];
-
-	foreach ( $pairs as $name => $default ) {
-		if ( array_key_exists( $name, $atts ) ) {
-			$out[ $name ] = $atts[ $name ];
-		} else {
-			$out[ $name ] = $default;
-		}
-	}
-
-	return $out;
+	return array_merge( $pairs, array_intersect_key( $atts, $pairs ) );
 }
 
 function absint( $maybeint ): int {
